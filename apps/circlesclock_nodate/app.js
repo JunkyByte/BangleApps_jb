@@ -124,7 +124,8 @@ function draw() {
   // date & dow
   g.setFontRobotoRegular21();
   g.setFontAlign(0, 0);
-  g.drawString(locale.date(new Date()), w / 2, h2);
+  ldate = new Date().toString().split(' ');
+  g.drawString(ldate[1] + '  ' + ldate[2], w / 2, h2);
   // g.drawString(locale.dow(new Date()), w / 2, h2 + dowOffset);
   
   drawCircle(1);

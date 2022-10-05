@@ -1,7 +1,7 @@
 { "id": "circlesclock_nodate",
   "name": "Circles clock without day",
   "shortName":"Circles clock",
-  "version":"0.01",
+  "version":"0.02",
   "description": "A clock with three or four circles for different data at the bottom in a probably familiar style now without the day of the week",
   "icon": "app.png",
   "screenshots": [{"url":"screenshot-dark.png"}, {"url":"screenshot-light.png"}, {"url":"screenshot-dark-4.png"}, {"url":"screenshot-light-4.png"}],
