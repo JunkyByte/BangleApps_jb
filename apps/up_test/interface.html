@@ -9,7 +9,6 @@
     <button class="btn btn-default" id="btnDelete">Delete</button>
 
     <script src="../../core/lib/interface.js">
-    <script src="require.js"></script>
 </script>
     <script>
 var dataElement = document.getElementById("data");
@@ -57,6 +56,7 @@ function getData() {
 // Or you can also delete the file
 
 document.getElementById("loadBtn").addEventListener("click", function() {
+        import "require.js";
         Util.showModal("Saving...");
         
         var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
