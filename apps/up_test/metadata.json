@@ -1,0 +1,14 @@
+{ "id": "test_up",
+  "name": "test_up",
+  "shortName":"test_up",
+  "version":"0.01",
+  "description": "yeah",
+  "icon": "app.png",
+  "tags": "",
+  "supports" : ["BANGLEJS2"],  
+  "readme": "README.md",
+  "storage": [
+    {"name":"7chname.app.js","url":"app.js"},
+    {"name":"7chname.img","url":"app-icon.js","evaluate":true}
+  ]
+}
