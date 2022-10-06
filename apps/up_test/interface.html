@@ -54,12 +54,10 @@ function getData() {
 // Or you can also delete the file
 
 document.getElementById("loadBtn").addEventListener("click", function() {
-  Util.saveCSV("gpsdata", csvData);
-});
-
-Util.showModal("Saving...");
-Util.writeStorage('test_data.json', 'xD', function() {
-  Util.hideModal();
+  Util.showModal("Saving...");
+  Util.writeStorage('test_data.json', 'xD', function() {
+    Util.hideModal();
+  });
 });
 
 document.getElementById("btnDelete").addEventListener("click", function() {
