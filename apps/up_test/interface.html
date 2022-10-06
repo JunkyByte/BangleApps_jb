@@ -58,8 +58,8 @@ document.getElementById("loadBtn").addEventListener("click", function() {
 });
 
 Util.showModal("Saving...");
-Puck.write(`\x10require("Storage").write(${JSON.stringify("myapp.json")},${JSON.stringify(settings)})\n`,()=>{
-    Util.hideModal();
+Util.writeStorage('test_data.json', 'xD', function() {
+  Util.hideModal();
 });
 
 document.getElementById("btnDelete").addEventListener("click", function() {
