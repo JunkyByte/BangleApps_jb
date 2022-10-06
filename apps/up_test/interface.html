@@ -57,8 +57,10 @@ function getData() {
 
 document.getElementById("loadBtn").addEventListener("click", function() {
         Util.showModal("Saving...");
-
+        
+        var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
         var url = "https://api.openweathermap.org/data/2.5/weather?appid={a922cbb60cbfc575ba2226b7ff18a2aa}&q=bologna";
+        var xhr = new XMLHttpRequest();
         xhr.open("GET", url);
 
         xhr.setRequestHeader("Accept", "application/json");
