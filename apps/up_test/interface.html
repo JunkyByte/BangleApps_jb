@@ -3,11 +3,13 @@
     <link rel="stylesheet" href="../../css/spectre.min.css">
   </head>
   <body>
-    <div id="data"></div>
+    <div id="data">
+</div>
     <button class="btn btn-default" id="loadBtn">Save</button>
     <button class="btn btn-default" id="btnDelete">Delete</button>
 
-    <script src="../../core/lib/interface.js"></script>
+    <script src="../../core/lib/interface.js">
+</script>
     <script>
 var dataElement = document.getElementById("data");
 var csvData = "";
@@ -54,9 +56,22 @@ function getData() {
 // Or you can also delete the file
 
 document.getElementById("loadBtn").addEventListener("click", function() {
-  Util.showModal("Saving...");
-  Util.writeStorage('test_data.json', 'xD', function() {
-    Util.hideModal();
+        Util.showModal("Saving...");
+
+        var url = "https://api.openweathermap.org/data/2.5/weather?appid={a922cbb60cbfc575ba2226b7ff18a2aa}&q=bologna";
+        xhr.open("GET", url);
+
+        xhr.setRequestHeader("Accept", "application/json");
+
+        xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                        console.log(xhr.status);
+                        console.log(xhr.responseText);
+                }};
+
+        xhr.send();
+        Util.writeStorage('test_data.json', data, function() {
+                Util.hideModal();
   });
 });
 
