@@ -5,6 +5,10 @@
   <body>
     <div id="data">
 </div>
+    <input type="file"
+       id="data" name="data"
+       accept="json/json">
+
     <button class="btn btn-default" id="loadBtn">Save</button>
     <button class="btn btn-default" id="btnDelete">Delete</button>
 
@@ -57,25 +61,13 @@ function getData() {
 // Or you can also delete the file
 
 document.getElementById("loadBtn").addEventListener("click", function() {
-        import { createRequire } from 'module';
-        const require = createRequire(import.meta.url);
-        Util.showModal("Saving...");
-        
-        var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-        var url = "https://api.openweathermap.org/data/2.5/weather?appid={a922cbb60cbfc575ba2226b7ff18a2aa}&q=bologna";
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", url);
+        const file = document.querySelector('input[type=file]').files[0];
+        const reader = new FileReader();
 
-        xhr.setRequestHeader("Accept", "application/json");
-
-        xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4) {
-                        console.log(xhr.status);
-                        console.log(xhr.responseText);
-                        data = xhr.responseText;
-                }};
-
-        xhr.send();
+        if (file) {
+                data = reader.readAsText(file);
+                console.log(data);
+        }
         Util.writeStorage('test_data.json', data, function() {
                 Util.hideModal();
   });
