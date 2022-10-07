@@ -6,7 +6,7 @@
     <div id="data">
 </div>
     <input type="file"
-       id="data" name="data"
+       id="dataInput" name="dataInput"
        accept="json/json">
 
     <button class="btn btn-default" id="loadBtn">Save</button>
@@ -61,16 +61,19 @@ function getData() {
 // Or you can also delete the file
 
 document.getElementById("loadBtn").addEventListener("click", function() {
-        const file = document.querySelector('input[type=file]').files[0];
-        const reader = new FileReader();
+        const readInputFile = (inputElement, callback) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                    callback(reader.result)
+              };
+                    reader.readAsText(inputElement.files[0]);
+        };
 
-        if (file) {
-                data = reader.readAsText(file);
-                console.log(data);
-        }
-        Util.writeStorage('test_data.json', data, function() {
-                Util.hideModal();
-  });
+        readInputFile(document.getElementById("dataInput"), (data) => {
+                    console.log('Uploaded data')
+                    Util.writeStorage('weather.json', data, function() {
+                            Util.hideModal();
+        })});
 });
 
 document.getElementById("btnDelete").addEventListener("click", function() {

@@ -12,8 +12,20 @@ function bigThenSmall(big, small, x, y) {
   g.drawString(small, x, y);
 }
 
+function getWeatherImage(weather){
+  if (weather == 'clear') {
+      return require("heatshrink").decompress(atob("kEgwUBqoABqkVAgQHYooHDqIHBFIdVoACEBglQDoVUgoDCCIMBFIlUKAIwEqEFAIIrGGYlBAQgMEHYgcCqACBFYIHDGYYHFC44nJG45HHK45nGOYJ3FQ46XHU463Hb7w"))
+  } else if (weather == 'rain') {
+      return require("heatshrink").decompress(atob("kEgwUBqtVqICBAAgHNqgDCooIDioCBgoREgEVBQQABqEVoImGqEAA4YNBAIIyDFgImBA4UBA4ImEB4NUA4JEDoglCqg7BFoIMDiojBHooFBKgtQFowcBA6ofBQghZCG451BAAYdCoAGCXwRoDEoJbDAoIjFABxCCRQQ6DE4sFLYInEipTBLYQA=="))
+  } else if (weather == 'clouds'){
+      return require("heatshrink").decompress(atob("kEgwUBqoAQqgHeABsFqsAIYNBA4MBqhPBAgIHBoNQioBBCgIICDYYHFDAIoEqEACAYDBoEVCAYHBFoNQA4gBBqkVA40ABANBBgYpCoBGBDoUBJ4ITCIoRfBJogxBDwYHZoAHGPow0DoDqDCgRIBAALuR"))
+  }
+
+  throw '?'
+}
+
 function getBackgroundImage() {
-  return require("heatshrink").decompress(atob("2Gw4cA///A4IDB8EnoEA4EKkEAsEVkmSpIC/AQklilRogFBosUBYOUqNFiQLCAoILCINcpAYNIAoIJBAIOkAwMipQLBCoWJINgDDiVKIIUlB4dSomUAoWRINZ0CHwJ6C0mJlMipMo0QICxUk0WSINiABpL+BPQOkyLOBqIIFkiGBQdwFDXgOJYoaMEA4KDwAoL+CyJBDkiDJosUpMlilRBYKYCqNJBYIOBqIOByImCF4NSDQQCCQZcpkQJDBwQIBQZeJlAFC0QmDBANKAoNLCIQvCAQYUBDQaDIilSAQIMFNwKDEAoKGBQYwIB0gFBUgJlComSR4OSC4VSAQSVBQZdJAYcSOgWSlIICQYTCBCIJBDPQiJGAQiACQY4aGIJRrCLIRBDQYJBHOgIgFqIIFR4IyJByIC/AX4C/AX4C/AQOQgAAlhIWViRBBwBB9gFJkBAmILAXXFPZB/IP5BikhB/gJB/AoJB/gVJIP8SpMgIP2SIP8EIIJA5IIkkIP8BIINIIPsJQYUkyBB7HwJBCySD/IPoABiRBBwBB9QYRA4II8gIPsEIIJA5II1IIP+SoBB+kmQIHRBFwBB/khA7IIgA9IP5B/IP5B/IP5BikmSpIC/AX9Jbn4A/AH4A/AH4A/AH4A/AH4A/AH4A/AH4A/ACESpADBpMgIHUEyVJIgNJkhB6khBBAQeAIP8kyBA4gJB/IIdBIP+SoBB/yUAkmAIPY+ByUIgmAhJEBIPIABIIMCH3YAByVJgESpMgIPY+BAQYA7gSAByVIY3tJkmSoBB9hJBBIHsAgJB/AAMkyBB/ghA/AH4A/AH4A/AH4A/AH4A/AH4A/AH4A/AH4A/AH4A/AH4A/AH4A/AH4A/AH4A/AH4A/AH4A/AH4A/AH4A/AH4A/AH4A/AH4A/AH4AVkmSpIC/AX9JTCkEwAVTiTaqIP5B/IIsBcAJB/kECoBB/gVIIP8AIP5B/IP5BEgRBVkmQINNAIKcJkmSFyJrBiBBSFKRBDpJBVCiBBBTKZBFYqOSKwTyPILECINUEFKJBCiQsBLigAQILCDCFqKDWCgJBTwApCoAXPyFJNwJBTF4RBQTAcSFh5BBhIvBIM4sBWYRBQYqsBkESVqBTEghBoCgJBVFiLFCgDFShMggRBoQaolPIJRZQINrdCDSYAQYrJBByBBmgJBWpEkTyhBUeohBQpI/kIIcAkhB/IILvRKaJBcghB/IP5BrgMgIP8JkhBWACRBUgVJkhrRINmSIIIC/AX4Cgk227d+iRB8nu7kvt4Q+5w3btvv8VJmO7tu2Im89YQNsycuZAVvQ3NNuma7+E2w+5PgVw43b8nXYoPbIOtrHIVw6xBBAQNt25B1pzFD93b0n3tuypjI2m//7d8zt8k027d+4RB2zrFBtwFBmIFBt5B3knJkmd/FM1vZkmEH2oCEne2/aGCH3ACCk9e7fwIPoCjA"));
+  return require("heatshrink").decompress(atob("2GwwcBIf4AHgeOnHgAoPjxwDBh048eABYQFBBYQArj////8AoP//wDBv4JB+EH/kBAoP/4BBsGAX/wEHIIUDBAX+n/gh4GC/BArOgICBPQd/4Ef+EAjlwBAXHgFx/5BsQAMAfwJ6Bv/4j/+nAIFgCGBQdwFDXgPAYoaMEgEBQeAABfwX4IIf+QZPjx0AgeOnEAhyYCnH/BYIOBnEDx/4EwQvBn4aCAQSDLj/xHgQ1Dj6DLgPAjgFCuAKDBAMHAgMGCIQvCAQYUBDQaDIx0//+PIIaABNwKDE8f/QwKDFOgMAvwFBUgJlC8EAR4MBC4U/AQSVBQZcAHYeBOgJ3Bj4ICQYTCBAAJBDPQiJGAQaACQZAaFIJZrCLIRBDQYJBHOgIAFnAIFgZ0KByIA/AH4A/AH4A/AAMCpMkyQCjoAXVwBBBiRB9yUAgg+kILQXXFPZB/IP5BigBB/pBB/AoJB/yEAIP+AgEEIPyCBIP0gIII+3IIxABIP1IIAMBIPtAQYUAgRB7IAYABQf5B9AoOAIAMSIPqCCH2xBJghB9kBBBH25BIgJB/gEJIP0AgQ+4II8SIP8AH3JBGAXpB/IP5B/IP5B/IMUAAH4A/AATd/AX4C/AX4C/AX4C/AX4C/AX4C/AX4C/AX4CQwEBAoMAghB6kEAgBEBAYJB6HgIAEiRB/gECIPFIIP5BDhBB/gEJIP8ApMAiRB7HwMAoMgiVAIgJB5AQJBByA+7AQKEBkmAgEEIPY+BAQZB7yCABgEBIPmSYwMAhJB9oBBBH3YCCpBB/AQMAgRB/kA+9AX4C/AX4C/AX4C/AX4C/AX4C/AX4C/AX4C/AX4C/AX4C/AX4C/AX4C/AX4C/AX4C/AX4C/AX4C/AX4C/AX4C/AX4C/AX4C/AX4CXgAA/AH4ACTCkgiSwTwDaqIP5B/IItIb4JB/gmQhJB/yEBIP+SIP5B/IP5BEyBBVgECINMJIKdAgEAF6JrBwRBSFKRBDCwJBUCiBBBTaZBFYqJVCgDyPILGQINUgFKJBCwArBLigCQILCDCF6KDWCgJBTiQpChIXPgUANwJBTF4RBQTAeAFh5BBoAvBIM4sBWYRBQYqtIgmAVqBTEkBBoCgJBVFiLFCkjFSoEEyBBoQaojNIJhZQINrdCDSYCQYrJBBgRBmpBBWgMATyhBUeohBQgA+jIIlJgBB/IILvRKaJBckBB/IP5BrpEEIP9AgBBWFiRBUyEAgBrRINhABAH4A/AEMBVANIIPsJkEApJB9HwUBIgKA5YQoFBQ3dAgGSIILE7gVAgmSAQI+5pK/BIIjFBQ3Q+CYvcBQYNIgEQIIIFCAG0JHYhHCpKF5IgMgAQI+6ZA4A9gmSoBB+AEQ="));;
 }
 
 let settings = storage.readJSON("cassioWatch.settings.json", true) || {};
@@ -54,19 +66,33 @@ function drawClock() {
 }
 
 function drawBattery() {
-  bigThenSmall(E.getBattery(), "%", 135, 21);
+  bigThenSmall(E.getBattery(), "%", 135, 22);
 }
 
-function getTemperature(){
-  try {
-    var weatherJson = storage.readJSON('weather.json');
-    var weather = weatherJson.weather;
-    return Math.round(weather.temp-273.15);
 
-  } catch(ex) {
-    print(ex)
-    return "?"
+// Weather logic
+var weather_curr = undefined;
+var temp_curr = undefined;
+try{
+  var weatherJson = storage.readJSON('weather.json');
+} catch(ex) {
+    weather_curr = 'disabled'
+}
+
+function getWeather(){
+  current_time = Date.now() / 1000;
+  var d = Infinity;
+  for (var ts in weatherJson) {
+    var d_curr = Math.abs(current_time - ts);
+    if (d_curr < d){
+      current = ts; 
+      d = d_curr;
+      continue;
+    }  // This can be more efficient
   }
+  // console.log(d + " " + current + " " + weatherJson[current][0]);
+  weather_curr = getWeatherImage(weatherJson[current][0]);
+  temp_curr = weatherJson[current][1];
 }
 
 function getSteps() {
@@ -106,7 +132,14 @@ function draw() {
 
   g.setFontAlign(0,-1);
   g.setFont("8x12", 2);
-  // g.drawString(getTemperature(), 155, 132);
+  if (weather_curr != 'disabled') {
+    if (weather_curr == undefined){
+        getWeather();
+    }
+    g.drawImage(weather_curr, 8, 17, {scale:1});
+    g.drawString(temp_curr + 'C', 75, 22);
+  }
+
   heart = 60; //Math.round(Bangle.getHealthStatus('last').bmp);
   offset_h = heart >= 100 ? 162 : 155;
   g.drawString(heart, offset_h, 90);
@@ -118,6 +151,11 @@ function draw() {
 
   // Hide widgets
   for (let wd of WIDGETS) {wd.draw=()=>{};wd.area="";}
+}
+
+if (weather_curr != 'disabled'){
+  setInterval(getWeather, 60 * 60 * 1.5 * 1000);
+  // setInterval(getWeather, 5 * 1000);
 }
 
 Bangle.on("lcdPower", (on) => {
@@ -145,4 +183,5 @@ Bangle.loadWidgets();
 g.reset();
 g.clear();
 draw();
+
 

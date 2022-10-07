@@ -1,7 +1,7 @@
 { "id": "up_test",
   "name": "up_test",
   "shortName":"up_test",
-  "version":"0.09",
+  "version":"0.13",
   "description": "yeah",
   "icon": "app.png",
   "tags": "",
