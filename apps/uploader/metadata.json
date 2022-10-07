@@ -1,14 +1,14 @@
 { "id": "uploader",
   "name": "uploader",
   "shortName":"uploader",
-  "version":"0.01",
+  "version":"0.02",
   "description": "An uploader app",
   "icon": "app.png",
   "tags": "",
   "supports" : ["BANGLEJS2"],  
   "type": "RAM",
   "readme": "README.md",
-  "custom": "interface.html",
+  "custom": "custom.html",
   "customConnect": true,
   "storage": []
 }
