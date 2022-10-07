@@ -10,5 +10,5 @@
   "interface": "interface.html",
   "storage": [
     { "name": "uploader.app.js", "url": "app.js" },
-    { "name": "uploader.img", "url": "app-icon.js", "evaluate": true }
+    { "name": "uploader.img", "url": "app-icon.js", "evaluate": true }]
 }
