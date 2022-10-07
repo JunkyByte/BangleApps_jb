@@ -6,9 +6,9 @@
   "icon": "app.png",
   "tags": "",
   "supports" : ["BANGLEJS2"],  
+  "type": "RAM",
   "readme": "README.md",
-  "interface": "interface.html",
-  "storage": [
-    { "name": "uploader.app.js", "url": "app.js" },
-    { "name": "uploader.img", "url": "app-icon.js", "evaluate": true }]
+  "custom": "interface.html",
+  "customConnect": true,
+  "storage": []
 }
