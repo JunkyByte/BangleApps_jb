@@ -146,7 +146,7 @@ function draw() {
      g.drawString(temp_curr, 137, 118);
   }
   
-  heart = Math.round(Bangle.getHealthStatus('last').bmp);
+  heart = Math.round(Bangle.getHealthStatus('last').bpm);
   offset_h = heart >= 100 ? 63 + 7 : 63;
   g.drawString(heart, offset_h, 25);
   
