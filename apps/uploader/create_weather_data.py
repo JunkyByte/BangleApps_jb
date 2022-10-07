@@ -1,7 +1,7 @@
 import requests
 import json
 
-url = "https://api.openweathermap.org/data/2.5/forecast?q=Rome,it&APPID=a922cbb60cbfc575ba2226b7ff18a2aa&units=metric"
+url = "https://api.openweathermap.org/data/2.5/forecast?q=Bologna,it&APPID=a922cbb60cbfc575ba2226b7ff18a2aa&units=metric"
 
 headers = {'accept': 'application/json'}
 
