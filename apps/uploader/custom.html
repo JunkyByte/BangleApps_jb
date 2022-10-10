@@ -9,11 +9,18 @@
        id="dataInput" name="dataInput"
        accept="*">
 
-    <button class="btn btn-default" id="loadBtn">Save</button>
-    <button class="btn btn-default" id="btnDelete">Delete</button>
+    <button class="btn btn-default" id="loadBtn">Upload file</button>
+    <!-- <button class="btn btn-default" id="btnDelete">Delete</button> --!>
 
-    <script src="../../core/lib/interface.js">
     <script src="https://requirejs.org/docs/release/2.3.5/minified/require.js"></script>
+
+    <p><button id="upload" class="btn btn-primary">Upload app</button></p>
+    <script src="../../core/lib/customize.js"></script>
+    <script>
+      document.getElementById("upload").addEventListener("click", function() {
+        sendCustomizedApp({id: 'uploader', storage: []});
+      });
+    </script>
 </script>
     <script>
 var dataElement = document.getElementById("data");
@@ -41,13 +48,13 @@ document.getElementById("loadBtn").addEventListener("click", function() {
                           )});
 });
 
-document.getElementById("btnDelete").addEventListener("click", function() {
-        Util.showModal("Deleting...");
-        Util.eraseStorageFile("gpspoilog.csv", function() {
-                Util.hideModal();
-                getData();
-        });
-});
+// document.getElementById("btnDelete").addEventListener("click", function() {
+//         Util.showModal("Deleting...");
+//         Util.eraseStorageFile("gpspoilog.csv", function() {
+//                 Util.hideModal();
+//                 getData();
+//         });
+// });
 
 function onInit() {
   // On start

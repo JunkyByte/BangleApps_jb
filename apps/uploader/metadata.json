@@ -6,7 +6,6 @@
   "icon": "app.png",
   "tags": "",
   "supports" : ["BANGLEJS2"],  
-  "type": "RAM",
   "readme": "README.md",
   "custom": "custom.html",
   "customConnect": true,
