@@ -28,11 +28,17 @@ document.getElementById("loadBtn").addEventListener("click", function() {
                     reader.readAsText(inputElement.files[0]);
         };
 
-        readInputFile(document.getElementById("dataInput"), (data) => {
-                    console.log('Uploaded data')
-                    Util.writeStorage('weather.json', data, function() {
-                            Util.hideModal();
-        })});
+        el = document.getElementById("dataInput")
+        var path = el.value;
+        var tokens= path.split('\\');
+        var filename = tokens[tokens.length-1];
+
+        readInputFile(el, (data) => {
+                    console.log('Uploaded data ' + filename)
+                    Util.writeStorage(filename, data, function() {
+                                        Util.hideModal();
+                          }
+                          )});
 });
 
 document.getElementById("btnDelete").addEventListener("click", function() {

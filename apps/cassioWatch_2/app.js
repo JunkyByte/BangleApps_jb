@@ -16,7 +16,7 @@ function getWeatherImage(weather){
   if (weather == 'clear') {
       return require("heatshrink").decompress(atob("kEgwUBqoABqkVAgQHYooHDqIHBFIdVoACEBglQDoVUgoDCCIMBFIlUKAIwEqEFAIIrGGYlBAQgMEHYgcCqACBFYIHDGYYHFC44nJG45HHK45nGOYJ3FQ46XHU463Hb7w"))
   } else if (weather == 'rain') {
-      return require("heatshrink").decompress(atob("kEgwUBqtVqICBAAgHNqgDCooIDioCBgoREgEVBQQABqEVoImGqEAA4YNBAIIyDFgImBA4UBA4ImEB4NUA4JEDoglCqg7BFoIMDiojBHooFBKgtQFowcBA6ofBQghZCG451BAAYdCoAGCXwRoDEoJbDAoIjFABxCCRQQ6DE4sFLYInEipTBLYQA=="))
+      return require("heatshrink").decompress(atob("kEgwUBqtVqICBAAgHNqgDCooIDioCBgoREgEVBQQABqEVoImGqEAA4YNBAIIyDFgImBA4UBA4ImEB4NUA4JEDoglCq7BFoIMDiojBHooFBKgtQFowcBA6ofBQghZCG451BAAYdCoAGCXwRoDEoJbDAoIjFABxCCRQQ6DE4sFLYInEipTBLYQA=="))
   } else if (weather == 'clouds'){
       return require("heatshrink").decompress(atob("kEgwUBqoAQqgHeABsFqsAIYNBA4MBqhPBAgIHBoNQioBBCgIICDYYHFDAIoEqEACAYDBoEVCAYHBFoNQA4gBBqkVA40ABANBBgYpCoBGBDoUBJ4ITCIoRfBJogxBDwYHZoAHGPow0DoDqDCgRIBAALuR"))
   }
@@ -91,8 +91,11 @@ var weather_curr = undefined;
 var temp_curr = undefined;
 try{
   var weatherJson = storage.readJSON('weather.json');
+  if (weatherJson == undefined)
+    throw 'weather disabled'
 } catch(ex) {
-    weather_curr = 'disabled'
+    weather_curr = 'disabled';
+    print('weather is disabled');
 }
 
 function getWeather(){
@@ -104,7 +107,7 @@ function getWeather(){
       current = ts; 
       d = d_curr;
       continue;
-    }  // This can be more efficient
+    } // This can be more efficient
   }
   // console.log(d + " " + current + " " + weatherJson[current][0]);
   weather_curr = getWeatherImage(weatherJson[current][0]);
@@ -179,7 +182,6 @@ function draw() {
 
 if (weather_curr != 'disabled'){
   setInterval(getWeather, 60 * 60 * 1.5 * 1000);
-  // setInterval(getWeather, 5 * 1000);
 }
 
 Bangle.on("lcdPower", (on) => {
