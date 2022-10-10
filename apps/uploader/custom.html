@@ -7,7 +7,7 @@
 </div>
     <input type="file"
        id="dataInput" name="dataInput"
-       accept="json/json">
+       accept="*">
 
     <button class="btn btn-default" id="loadBtn">Save</button>
     <button class="btn btn-default" id="btnDelete">Delete</button>
@@ -18,47 +18,6 @@
     <script>
 var dataElement = document.getElementById("data");
 var csvData = "";
-
-function getData() {
-  // show loading window
-  Util.showModal("Loading...");
-  // get the data
-  dataElement.innerHTML = "";
-  Util.readStorageFile(`gpspoilog.csv`,data=>{
-    csvData = data.trim();
-    // remove window
-    Util.hideModal();
-    // If no data, report it and exit
-    if (data.length==0) {
-      dataElement.innerHTML = "<b>No data found</b>";
-      return;
-    }
-    // Otherwise parse the data and output it as a table
-    dataElement.innerHTML = `<table>
-    <tr>
-      <th>Time</th>
-      <th>Lat</th>
-      <th>Lon</th>
-      <th>Alt</th>
-      <th>Type</th>
-    </tr>`+data.trim().split("\n").map(l=>{
-      l = l.split(",");
-      return `<tr>
-      <td>${(new Date(l[0]*1000)).toLocaleString()}</td>
-      <td>${l[1]}</td>
-      <td>${l[2]}</td>
-      <td>${l[3]}</td>
-      <td>${l[4]}</td>
-      </tr>`
-    }).join("\n")+"</table>";
-  });
-}
-
-// You can call a utility function to save the data
-// document.getElementById("loadBtn").addEventListener("click", function() {
-//   Util.saveCSV("gpsdata", csvData);
-// });
-// Or you can also delete the file
 
 document.getElementById("loadBtn").addEventListener("click", function() {
         const readInputFile = (inputElement, callback) => {
@@ -77,15 +36,15 @@ document.getElementById("loadBtn").addEventListener("click", function() {
 });
 
 document.getElementById("btnDelete").addEventListener("click", function() {
-  Util.showModal("Deleting...");
-  Util.eraseStorageFile("gpspoilog.csv", function() {
-    Util.hideModal();
-    getData();
-  });
+        Util.showModal("Deleting...");
+        Util.eraseStorageFile("gpspoilog.csv", function() {
+                Util.hideModal();
+                getData();
+        });
 });
-// Called when app starts
+
 function onInit() {
-  getData();
+  // On start
 }
 
     </script>
