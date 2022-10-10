@@ -1,2 +1,3 @@
 0.01: The uploader, refactored
 0.02: minor fix
+0.03: added app.js with bt restart to allow data transfer

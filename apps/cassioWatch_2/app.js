@@ -25,7 +25,7 @@ function getWeatherImage(weather){
 }
 
 function getDigitBg() {
-  return require("heatshrink").decompress(atob("jkq4MA///3HWCRU//8Ag///kAv//mET//nwPP/14j1/5+B+EA/EfgEfwP4gIGBwEPBoIGDBoIGDCgXggH8jl/8eB7//zEPG4QGBkEcgEDGAgiCGAgpCHwY3CIoo3G+P8G4XvwMfMIMD//3wBvCgP/EAIAJA="));
+  return require("heatshrink").decompress(atob("jkq4MA///i3GCRU//8Ag///kAv//mET//nwPP/14j1/5+B+EA/EfgEfwP4gIGBwEPBoIGDBoIGDCgXggH8jl/8eB7//zEPG4QGBkEcgEDGAgiCGAgpCHwY3CIoo3G+P8G4XvwMfMIMD//3wBvCgP/EAIAJA="));
 }
 
 function getBackgroundImage() {
@@ -51,6 +51,7 @@ function clearIntervals() {
   drawTimeout = undefined;
 }
 
+var bg_digit = getDigitBg();
 function drawClock() {
   g.setFont("7x11Numeric7Seg", 4);
   // quad = [70, 54, 120, 95]
@@ -60,11 +61,10 @@ function drawClock() {
   // g.fillRect(quad[0], quad[1], quad[2], quad[3]);
   // g.setColor(58, 78, 101);
   g.setColor(0, 0, 0);
-  bg_digit = getDigitBg();
-  g.drawImage(bg_digit, 124, 52, {scale:1.23});
-  g.drawImage(bg_digit, 96, 52, {scale:1.23});
-  g.drawImage(bg_digit, 48, 52, {scale:1.23});
-  g.drawImage(bg_digit, 20, 52, {scale:1.23});
+  g.drawImage(bg_digit, 124, 51, {scale:1.23});
+  g.drawImage(bg_digit, 96, 51, {scale:1.23});
+  g.drawImage(bg_digit, 48, 51, {scale:1.23});
+  g.drawImage(bg_digit, 20, 51, {scale:1.23});
   g.drawString(require("locale").time(new Date(), 1), 90, 55);
   // g.setFont("8x12", 2);
   // g.drawString(require("locale").dow(new Date(), 2).toUpperCase(), 61, 115);
@@ -73,11 +73,16 @@ function drawClock() {
   // g.setFont("8x12", 2);
   g.setFont("7x11Numeric7Seg", 2);
   const time = new Date().getDate();
+  g.drawImage(bg_digit, 39, 118, {scale:0.6});
+  g.drawImage(bg_digit, 53, 118, {scale:0.6});
   g.drawString(time < 10 ? "0" + time : time, 56, 120);
 }
 
 function drawBattery() {
-  bigThenSmall(E.getBattery(), "%", 120, 23);
+  g.drawImage(bg_digit, 117, 21, {scale:0.62});
+  g.drawImage(bg_digit, 132, 21, {scale:0.62});
+  bigThenSmall(33, "%", 120, 23);
+  // bigThenSmall(E.getBattery(), "%", 120, 23);
 }
 
 
@@ -126,12 +131,12 @@ function getSteps() {
 }
 
 
+var background = getBackgroundImage();
 function draw() {
   queueDraw();
 
   g.reset();
   g.clear();
-  let background = getBackgroundImage();
   g.drawImage(background, 0, 0, { scale: 1 });
   
   g.setColor(0, 0, 0);
@@ -143,11 +148,23 @@ function draw() {
          getWeather();
      }
      g.drawImage(weather_curr, 78, 113, {scale:1});
-     g.drawString(temp_curr, 137, 118);
+     g.drawImage(bg_digit, 111, 118, {scale:0.6});
+     g.drawImage(bg_digit, 125, 118, {scale:0.6});
+     g.drawImage(bg_digit, 144, 118, {scale:0.6});
+     g.drawString(temp_curr, 137, 120);
   }
   
   heart = Math.round(Bangle.getHealthStatus('last').bpm);
-  offset_h = heart >= 100 ? 63 + 7 : 63;
+  high_heart = heart >= 100
+  offset_h = 63;
+  if (high_heart) {
+    g.drawImage(bg_digit, 40, 23, {scale:0.62});
+    g.drawImage(bg_digit, 54, 23, {scale:0.62});
+    g.drawImage(bg_digit, 67, 23, {scale:0.62});
+  } else {
+    g.drawImage(bg_digit, 45, 23, {scale:0.62});
+    g.drawImage(bg_digit, 60, 23, {scale:0.62});
+  }
   g.drawString(heart, offset_h, 25);
   
   // g.drawString(getSteps(), 160, 132); // TODO disabled
@@ -190,6 +207,3 @@ Bangle.loadWidgets();
 g.reset();
 g.clear();
 draw();
-
-
-
