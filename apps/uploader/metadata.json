@@ -11,6 +11,6 @@
   "customConnect": true,
   "storage": [
     { "name": "uploader.app.js", "url": "app.js" },
-    { "name": "uploader.app.png", "url": "app-icon.js", "evaluate": true }
+    { "name": "uploader.img", "url": "app-icon.js", "evaluate": true }
   ]
 }

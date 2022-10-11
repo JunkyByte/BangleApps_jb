@@ -1,0 +1,15 @@
+{ "id": "python_bridge",
+  "name": "python_bridge",
+  "shortName":"python_bridge",
+  "version":"0.01",
+  "description": "python_bridge app",
+  "icon": "app.png",
+  "tags": "",
+  "supports" : ["BANGLEJS2"],  
+  "readme": "README.md",
+  "storage": [
+    { "name": "python_bridge.app.js", "url": "app.js" },
+    { "name": "python_bridge.app.boot.js", "url": "app.boot.js" },
+    { "name": "python_bridge.img", "url": "app-icon.js", "evaluate": true }
+  ]
+}
