@@ -86,7 +86,7 @@ function drawBattery() {
 var weather_curr = undefined;
 var temp_curr = undefined;
 try{
-  var weatherJson = storage.readJSON('weather.json\1');
+  var weatherJson = storage.readJSON('weather.json');
   if (weatherJson == undefined)
     throw 'weather disabled'
 } catch(ex) {
