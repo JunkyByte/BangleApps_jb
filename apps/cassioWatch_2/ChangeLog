@@ -2,3 +2,4 @@
 0.02: Fix
 0.03: Minor changes
 0.04: Fix but there's a bug with files uploaded have \1 on end of filename
+0.05: revert

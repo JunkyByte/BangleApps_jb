@@ -73,14 +73,10 @@ function drawClock() {
   // g.setFont("8x12", 2);
   g.setFont("7x11Numeric7Seg", 2);
   const time = new Date().getDate();
-  g.drawImage(bg_digit, 39, 118, {scale:0.6});
-  g.drawImage(bg_digit, 53, 118, {scale:0.6});
   g.drawString(time < 10 ? "0" + time : time, 56, 120);
 }
 
 function drawBattery() {
-  g.drawImage(bg_digit, 117, 21, {scale:0.62});
-  g.drawImage(bg_digit, 132, 21, {scale:0.62});
   bigThenSmall(33, "%", 120, 23);
   // bigThenSmall(E.getBattery(), "%", 120, 23);
 }
@@ -151,23 +147,11 @@ function draw() {
          getWeather();
      }
      g.drawImage(weather_curr, 78, 113, {scale:1});
-     g.drawImage(bg_digit, 111, 118, {scale:0.6});
-     g.drawImage(bg_digit, 125, 118, {scale:0.6});
-     g.drawImage(bg_digit, 144, 118, {scale:0.6});
      g.drawString(temp_curr, 137, 120);
   }
   
   heart = Math.round(Bangle.getHealthStatus('last').bpm);
-  high_heart = heart >= 100
   offset_h = 63;
-  if (high_heart) {
-    g.drawImage(bg_digit, 40, 23, {scale:0.62});
-    g.drawImage(bg_digit, 54, 23, {scale:0.62});
-    g.drawImage(bg_digit, 67, 23, {scale:0.62});
-  } else {
-    g.drawImage(bg_digit, 45, 23, {scale:0.62});
-    g.drawImage(bg_digit, 60, 23, {scale:0.62});
-  }
   g.drawString(heart, offset_h, 25);
   
   // g.drawString(getSteps(), 160, 132); // TODO disabled
