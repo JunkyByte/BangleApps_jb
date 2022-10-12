@@ -1,7 +1,7 @@
 { "id": "uploader",
   "name": "uploader",
   "shortName":"uploader",
-  "version":"0.03",
+  "version":"0.04",
   "description": "An uploader app",
   "icon": "app.png",
   "tags": "",

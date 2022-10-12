@@ -3,6 +3,7 @@ const storage = require('Storage');
 require("Font6x12").add(Graphics);
 require("Font8x12").add(Graphics);
 require("Font7x11Numeric7Seg").add(Graphics);
+var t_color = [0.196, 0.305, 0.396];
 
 function bigThenSmall(big, small, x, y) {
   g.setFont("7x11Numeric7Seg", 2);
@@ -25,7 +26,7 @@ function getWeatherImage(weather){
 }
 
 function getDigitBg() {
-  return require("heatshrink").decompress(atob("jkq4MA///i3GCRU//8Ag///kAv//mET//nwPP/14j1/5+B+EA/EfgEfwP4gIGBwEPBoIGDBoIGDCgXggH8jl/8eB7//zEPG4QGBkEcgEDGAgiCGAgpCHwY3CIoo3G+P8G4XvwMfMIMD//3wBvCgP/EAIAJA="));
+  return require("heatshrink").decompress(atob("jkq4MA///u/OCRU//8Ag///kAv//mET//nwPP/14j1/5+B+EA/EfgEfwP4gIGBwEPBoIGDBoIGDCgXggH8jl/8eB7//zEPG4QGBkEcgEDGAgiCGAgpCHwY3CIoo3G+P8G4XvwMfMIMD//3wBvCgP/EAIAJA="));
 }
 
 function getBackgroundImage() {
@@ -54,31 +55,31 @@ function clearIntervals() {
 var bg_digit = getDigitBg();
 function drawClock() {
   g.setFont("7x11Numeric7Seg", 4);
-  // quad = [70, 54, 120, 95]
-  // g.clearRect(quad[0], quad[1], quad[2], quad[3]);
-  // g.setColor(234, 232, 205);
-  // g.drawRect(quad[0], quad[1], quad[2], quad[3]);
-  // g.fillRect(quad[0], quad[1], quad[2], quad[3]);
-  // g.setColor(58, 78, 101);
-  g.setColor(0, 0, 0);
+  g.setColor(t_color[0], t_color[1], t_color[2]);
   g.drawImage(bg_digit, 124, 51, {scale:1.23});
   g.drawImage(bg_digit, 96, 51, {scale:1.23});
   g.drawImage(bg_digit, 48, 51, {scale:1.23});
   g.drawImage(bg_digit, 20, 51, {scale:1.23});
   g.drawString(require("locale").time(new Date(), 1), 90, 55);
-  // g.setFont("8x12", 2);
-  // g.drawString(require("locale").dow(new Date(), 2).toUpperCase(), 61, 115);
+  
   g.setFont("8x12");
+  g.setColor(t_color[0], t_color[1], t_color[2]);
   g.drawString(require("locale").month(new Date(), 2).toUpperCase(), 56, 107);
-  // g.setFont("8x12", 2);
+  
   g.setFont("7x11Numeric7Seg", 2);
+  g.setColor(t_color[0], t_color[1], t_color[2]);
   const time = new Date().getDate();
   g.drawString(time < 10 ? "0" + time : time, 56, 120);
 }
 
 function drawBattery() {
-  bigThenSmall(33, "%", 120, 23);
-  // bigThenSmall(E.getBattery(), "%", 120, 23);
+  var symbol = '%'
+  if (Bangle.isCharging()){
+    symbol = '+'
+    g.setColor(0, 0.5, 0);
+  } else
+    g.setColor(t_color[0], t_color[1], t_color[2]);
+  bigThenSmall(E.getBattery(), symbol, 120, 23);
 }
 
 
@@ -138,10 +139,9 @@ function draw() {
   g.clear();
   g.drawImage(background, 0, 0, { scale: 1 });
   
-  g.setColor(0, 0, 0);
   g.setFontAlign(0,-1);
-  
   g.setFont("7x11Numeric7Seg", 2);
+  g.setColor(t_color[0], t_color[1], t_color[2]);
   if (weather_curr != 'disabled') {
      if (weather_curr == undefined){
          getWeather();
@@ -158,6 +158,7 @@ function draw() {
 
   drawClock();
   g.setFontAlign(-1,-1);
+  g.setFont("7x11Numeric7Seg", 2);
   drawBattery();
 
   // Hide widgets
@@ -176,6 +177,7 @@ Bangle.on("lcdPower", (on) => {
   }
 });
 
+Bangle.on('charging', function(charging) { draw(); });
 
 Bangle.on("lock", (locked) => {
   clearIntervals();
