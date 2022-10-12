@@ -1,4 +1,4 @@
-global btdatareceiver = new Object();
+var btdatareceiver = new Object();
 
 function send_data(data) {
   // This will be called from python and emitted here as an event
