@@ -12,17 +12,16 @@ function send_state(state, value) {
 
 function send_to_python(task, msg, options) {
   options = options || {};
-  d = {}
-  prefix = '<python_bridge>'
-  d.msg = msg
-  d.options = options
-  d.task = task
+  var d = {};
+  var prefix = '<python_bridge>';
+  d.msg = msg;
+  d.options = options;
+  d.task = task;
   Bluetooth.println('');
   Bluetooth.println(prefix + JSON.stringify(d));
 }
 
 function wait_connection(){
-  // E.showMessage('Waiting for connection', 30, 30);
   var interval = setInterval(() => {
     NRF.sleep();
     setTimeout(() => {
@@ -66,7 +65,6 @@ Bangle.http = function (url, options) {
       }, 90000);  // TODO  This must be a pretty long timeout!
 
       btdatareceiver.on('http', (response) => {
-        Bluetooth.println('well! i received it')
         Bangle.httpRequest[options.id]={r:resolve,j:reject,t:setTimeout(()=>{
           //if after "timeoutMillisec" it still hasn't answered -> reject
           delete Bangle.httpRequest[options.id];
@@ -76,7 +74,6 @@ Bangle.http = function (url, options) {
 
         clearInterval(rej_interval);
         response = JSON.parse(response);
-        Bluetooth.println('well! i parsed it')
 
         //get the promise and call the promise resolve
         if (Bangle.httpRequest === undefined) return;

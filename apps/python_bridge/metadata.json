@@ -1,7 +1,7 @@
 { "id": "python_bridge",
   "name": "python_bridge",
   "shortName":"python_bridge",
-  "version":"0.01",
+  "version":"0.02",
   "description": "python_bridge app",
   "icon": "app.png",
   "tags": "",
