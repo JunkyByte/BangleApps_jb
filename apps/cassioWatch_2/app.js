@@ -6,7 +6,7 @@ require("Font7x11Numeric7Seg").add(Graphics);
 var t_color = [0.196, 0.305, 0.396];
 
 function bigThenSmall(big, small, x, y) {
-  g.setFont("7x11Numeric7Seg", 2);
+  g.setFont("8x12", 2);
   g.drawString(big, x, y);
   x += g.stringWidth(big);
   g.setFont("8x12");
@@ -15,11 +15,11 @@ function bigThenSmall(big, small, x, y) {
 
 function getWeatherImage(weather){
   if (weather == 'clear') {
-      return require("heatshrink").decompress(atob("kEgwUBqoABqkVAgQHYooHDqIHBFIdVoACEBglQDoVUgoDCCIMBFIlUKAIwEqEFAIIrGGYlBAQgMEHYgcCqACBFYIHDGYYHFC44nJG45HHK45nGOYJ3FQ46XHU463Hb7w"))
+      return require("heatshrink").decompress(atob("kEg4MA///tkygEBwAMBAZUEAYMghwJBuEHAYPggeAgPAgOH8IUBj/4BoM8ngVCDIVggwZCDoXAgcA/ADBDIIDCBYYTEDYYjDFYYzCHYZDDJYZTDLYZvP"));
   } else if (weather == 'rain') {
-      return require("heatshrink").decompress(atob("kEgwUBqtVqICBAAgHNqgDCooIDioCBgoREgEVBQQABqEVoImGqEAA4YNBAIIyDFgImBA4UBA4ImEB4NUA4JEDoglCq7BFoIMDiojBHooFBKgtQFowcBA6ofBQghZCG451BAAYdCoAGCXwRoDEoJbDAoIjFABxCCRQQ6DE4sFLYInEipTBLYQA=="))
+      return require("heatshrink").decompress(atob("kEg4MA///tkyBAIMDAYsQgFAgEIgHABAP8wEAgeGAwMCgfwgEGg0CgEEhgDB8gYBA4MYgOAgvwgP4g4oBxkGBwMGhgDBgYWCgIDHB4cEGwQbDgZcB/kAv//8EAsODBoPDCIQAHmFBLgNgCYXBCYWCFoI"));
   } else if (weather == 'clouds'){
-      return require("heatshrink").decompress(atob("kEgwUBqoAQqgHeABsFqsAIYNBA4MBqhPBAgIHBoNQioBBCgIICDYYHFDAIoEqEACAYDBoEVCAYHBFoNQA4gBBqkVA40ABANBBgYpCoBGBDoUBJ4ITCIoRfBJogxBDwYHZoAHGPow0DoDqDCgRIBAALuR"))
+      return require("heatshrink").decompress(atob("kEg4MA///tkyCBEQAYUwAZQAG4H+g0A8P/h0AseDxkABIPAAYXwgEMgf8AYMHx4DBh0DAYMMgOAAYX4g0YgH8g84gEOuf4EQPhEwMDCoIDMg4DCHwccOgQhBn//8BfHA"));
   }
 
   throw '?'
@@ -30,7 +30,7 @@ function getDigitBg() {
 }
 
 function getBackgroundImage() {
-  return require("heatshrink").decompress(atob("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"));
+  return require("heatshrink").decompress(atob("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"));
 }
 
 let settings = storage.readJSON("cassioWatch.settings.json", true) || {};
@@ -54,22 +54,27 @@ function clearIntervals() {
 
 var bg_digit = getDigitBg();
 function drawClock() {
+  var height = 58;
   g.setFont("7x11Numeric7Seg", 4);
+  g.drawImage(bg_digit, 124, height, {scale:1.23});
+  g.drawImage(bg_digit, 96, height, {scale:1.23});
+  g.drawImage(bg_digit, 48, height, {scale:1.23});
+  g.drawImage(bg_digit, 20, height, {scale:1.23});
+  const t = require("locale").time(new Date(), 1);
+  if (parseInt(t.slice(0, t.indexOf(':'))) > 18)
+    g.setColor(0, 0, 0);
+  else
+    g.setColor(t_color[0], t_color[1], t_color[2]);
+  g.drawString(t, 90, height + 4);
+
+  // Other strings use always blueish color
+  g.setFont("8x12", 2);
   g.setColor(t_color[0], t_color[1], t_color[2]);
-  g.drawImage(bg_digit, 124, 51, {scale:1.23});
-  g.drawImage(bg_digit, 96, 51, {scale:1.23});
-  g.drawImage(bg_digit, 48, 51, {scale:1.23});
-  g.drawImage(bg_digit, 20, 51, {scale:1.23});
-  g.drawString(require("locale").time(new Date(), 1), 90, 55);
-  
-  g.setFont("8x12");
-  g.setColor(t_color[0], t_color[1], t_color[2]);
-  g.drawString(require("locale").month(new Date(), 2).toUpperCase(), 56, 107);
-  
-  g.setFont("7x11Numeric7Seg", 2);
-  g.setColor(t_color[0], t_color[1], t_color[2]);
+
+  g.drawString(require("locale").month(new Date(), 2).toUpperCase(), 65, 28);
+
   const time = new Date().getDate();
-  g.drawString(time < 10 ? "0" + time : time, 56, 120);
+  g.drawString(time < 10 ? "0" + time : time, 96, 28);
 }
 
 function drawBattery() {
@@ -79,7 +84,7 @@ function drawBattery() {
     g.setColor(0, 0.5, 0);
   } else
     g.setColor(t_color[0], t_color[1], t_color[2]);
-  bigThenSmall(E.getBattery(), symbol, 120, 23);
+  bigThenSmall(E.getBattery(), symbol, 130, 28);
 }
 
 
@@ -111,26 +116,7 @@ function getWeather(){
   temp_curr = weatherJson[current][1];
 }
 
-function getSteps() {
-  var steps = 0;
-  try{
-      if (WIDGETS.wpedom !== undefined) {
-          steps = WIDGETS.wpedom.getSteps();
-      } else if (WIDGETS.activepedom !== undefined) {
-          steps = WIDGETS.activepedom.getSteps();
-      } else {
-        steps = Bangle.getHealthStatus("day").steps;
-      }
-  } catch(ex) {
-      // In case we failed, we can only show 0 steps.
-      return "? k";
-  }
-
-  steps = Math.round(steps/1000);
-  return steps + "k";
-}
-
-
+// Drawing
 var background = getBackgroundImage();
 function draw() {
   queueDraw();
@@ -146,16 +132,12 @@ function draw() {
      if (weather_curr == undefined){
          getWeather();
      }
-     g.drawImage(weather_curr, 78, 113, {scale:1});
-     g.drawString(temp_curr, 137, 120);
+     g.drawImage(weather_curr, 41, 113, {scale:1});
+     g.drawString(temp_curr, 105, 120);
+     g.setFont("8x12", 2);
+     g.drawString('C', 135, 122);
   }
   
-  heart = Math.round(Bangle.getHealthStatus('last').bpm);
-  offset_h = 63;
-  g.drawString(heart, offset_h, 25);
-  
-  // g.drawString(getSteps(), 160, 132); // TODO disabled
-
   drawClock();
   g.setFontAlign(-1,-1);
   g.setFont("7x11Numeric7Seg", 2);
@@ -195,3 +177,4 @@ Bangle.loadWidgets();
 g.reset();
 g.clear();
 draw();
+
