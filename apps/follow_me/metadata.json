@@ -1,0 +1,15 @@
+{ "id": "follow_me",
+  "name": "follow_me",
+  "shortName":"follow_me",
+  "version":"0.01",
+  "description": "follow me app",
+  "icon": "app.png",
+  "tags": "",
+  "supports" : ["BANGLEJS2"],  
+  "readme": "README.md",
+  "storage": [
+    { "name": "follow_me.app.js", "url": "app.js" },
+    { "name": "magn_tilt", "url": "magn_tilt.js" },
+    { "name": "follow_me.img", "url": "app-icon.js", "evaluate": true }
+  ]
+}
