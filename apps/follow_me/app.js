@@ -69,7 +69,7 @@ function degrees(a) {
 function dist_segment(pos_lat, pos_lon, a_lat, a_lon, b_lat, b_lon){
   var d = distance(a_lat, a_lon, pos_lat, pos_lon);
   var alpha = (Math.abs(bearing(a_lat, a_lon, b_lat, b_lon) - bearing(a_lat, a_lon, pos_lat, pos_lon)) / 180) * Math.PI
-  return Math.abs(Math.sin(alpha) * d)
+  return Math.round(Math.abs(Math.sin(alpha) * d));
 }
 
 class Node {
@@ -123,8 +123,8 @@ class Holder {
     this.dsegm = undefined;
     this.was_far = false;
     this.did_start = false;
-    this.THR_FAR = 20;
-    this.THR_CLOSE = 10;
+    this.THR_FAR = 26;
+    this.THR_CLOSE = 25;
   }
 
   find_target() {  // https://stackoverflow.com/a/58883850/7063774
@@ -153,11 +153,11 @@ class Holder {
     // console.log('npoint: ' + this.nnode.lat + ' ' + this.nnode.lon);
     // console.log('Proj point: ' + lat_p + ' ' + lon_p);
     // Dot between (current -> Projection) and (prev -> next)
-    const curr_to_p = [lat_p - this.lat, lon_p - this.lon];
+    const curr_to_p = [this.nnode.lat - this.lat, this.nnode.lon - this.lon];
     const prev_to_next = [this.nnode.lat - this.pnode.lat, this.nnode.lon - this.pnode.lon];
     const c = Math.abs(dot(curr_to_p, prev_to_next)) / (norm(curr_to_p) * norm(prev_to_next)); // How correct wrt to segment
     console.log('cos betwen curr->proj and prev->next: ' + c);
-    this.target_pos = [this.nnode.lat * c + lat_p * (1-c), this.nnode.lon * c + lon_p * (1-c)];
+    this.target_pos = [this.nnode.lat * (1 - c) + lat_p * c, this.nnode.lon * (1 - c) + lon_p * c];
     return this.target_pos
   }
 
@@ -271,6 +271,7 @@ var route_trace = new Route(route_trace_json);
  * End point distance should decrease, when < THRESHOLD -> start point becomes end point and end point -> next end point
  * In case you go back we can do the opposite (take care after ^ you need to get far from start point before it can switch back)
  * to prevent jumps
+ * TODO: Fallback if you dont get close enough to end point it should switch to following one if you progress anyway? I guess just manually recalculate
 */
 
 function start(){
@@ -334,11 +335,16 @@ function draw(){
   h += incr;
   g.drawString('Head ' + holder.heading, w, h);
   h += incr;
-  g.drawString('Speed ' + holder.speed, w, h);
+  // g.drawString('Speed ' + holder.speed, w, h);
+  // h += incr;
+  g.drawString('dp ' + holder.dpnode, w, h);
   h += incr;
+  g.drawString('dn ' + holder.dnnode, w, h);
+  h += incr;
+  g.drawString('ds ' + holder.dsegm, w, h);
 
   // Compass image
-  g.drawImage(get_compass_image(), 125, h, {rotate: radians(holder.heading)})
+  g.drawImage(get_compass_image(), 125, h - 2.2 * incr, {rotate: radians(holder.heading)})
 }
 
 function main(){
@@ -357,7 +363,7 @@ function main(){
     var shouldDraw = update();
     if (shouldDraw)
       draw();
-  }, 5000);
+  }, 100);
 }
 
 var mag = require('magn_tilt');
