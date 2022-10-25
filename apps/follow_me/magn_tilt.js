@@ -79,7 +79,6 @@ exports.docalibrate = function (first){
       E.showAlert(msg,title).then(action.bind(null,true));
     else 
       E.showPrompt(msg,{title:title,buttons:{"Start":true,"Cancel":false}}).then(action);
-  return Promise.resolve()
 }
 
 var calibrating=false;
