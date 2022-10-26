@@ -30,6 +30,7 @@ function wait_connection(from_notification, show_messages){
     if (show_messages)
       E.showMessage('Disconnected', 'python_bridge');
     NRF.disconnect();
+    Bangle.reset();
   });
 
   // We might be connected already

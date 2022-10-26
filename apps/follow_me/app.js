@@ -143,6 +143,18 @@ class Holder {
     this.THR_CLOSE = 25;
   }
 
+  reset(route) {
+    this.route = route;
+    this.target_pos = undefined;
+    this.pnode = undefined;
+    this.nnode = undefined;
+    this.dpnode = undefined;
+    this.dnnode = undefined;
+    this.dsegm = undefined;
+    this.tot_length = undefined;
+    this.was_far = false;
+  }
+
   get heading() {
     return mag.read(this._heading)
   }
@@ -245,12 +257,10 @@ class Holder {
 
   find_endpoints() {  // Finds current endpoints assuming no previous information
     var distances = [];
-    this.tot_length = 0;
     for (let idx = 0; idx < this.route.len; idx++){
       var node = this.route.nodes[idx];
       var d = distance(node.lat, node.lon, this.lat, this.lon);
       distances.push(d);
-      this.tot_length += d;
       // console.log('d from node ' + idx + ': '+ distance(node.lat, node.lon, this.lat, this.lon))
     }
 
@@ -281,14 +291,14 @@ class Holder {
   }
 }
 
-var route_json = require("Storage").readJSON('og.json');
+var route_json = require("Storage").readJSON('og.gpx.json');
 // var route_json = require("Storage").readJSON('prom_sirio.json');
 var route = new Route(route_json);
 
 var holder = new Holder(route);
 
 // FAKE DATA
-var route_trace_json = require("Storage").readJSON('trace.json');  // TODO
+var route_trace_json = require("Storage").readJSON('trace.gpx.json');  // TODO
 var route_trace = new Route(route_trace_json);
 // route_trace = undefined;
 //
@@ -313,6 +323,7 @@ var route_trace = new Route(route_trace_json);
 function start(){
   // Start by finding end points
   holder.find_endpoints()
+  holder.update_total_len()
 }
 
 var nn = 0;
@@ -366,12 +377,38 @@ function show_menu(){
     //     E.showMenu();
     //     draw();
     //   })},
+    "Pick File": pickGPX,
     "Recalculate" : function() {E.showMenu(); holder.find_endpoints(); draw(true);},
     "Exit" : function() { E.showMenu(); holder.inmenu = false; draw(true);},
   };
 
   holder.inmenu = true;
   E.showMenu(mainmenu)
+}
+
+function pickGPX() {
+  const menu = {
+    '': { 'title': 'Tracks' }
+  };
+  var found = false;
+  require("Storage").list(/\.gpx\.json$/).forEach(filename=>{
+    found = true;
+    menu[filename] = ()=>opengpx(filename);
+  });
+  if (!found)
+    menu["No GPX found"] = function(){};
+  menu['< Back'] = () => { show_menu(); };
+  return E.showMenu(menu);
+}
+
+function opengpx(filename){
+  route_json = require("Storage").readJSON(filename);
+  route = new Route(route_json);
+  holder.reset(route);
+  start();
+  E.showMenu();  // TODO: Create function for closing menu as above (Exit)
+  holder.inmenu = false;
+  draw(true);
 }
 
 
@@ -527,7 +564,7 @@ function main(){
     setInterval(function() {  // Every N seconds update internal infos and decide if you want to draw
       draw_frequent();
     }, 500);
-  }, 3000);
+  }, 5000);
 }
 
 //

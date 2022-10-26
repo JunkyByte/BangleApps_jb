@@ -34,8 +34,9 @@ E.on('ANCS',msg=>{
         info.new = true;
       }
 
-      if (info.appId === 'com.omz-software.Pythonista3')  // Ignore pythonista events
+      if (info.appId === 'com.omz-software.Pythonista3'){  // Ignore pythonista events
         return
+      }
 
       E.emit("notify", Object.assign(msg, info));
       Bangle.ancsMessageQueue.shift();
