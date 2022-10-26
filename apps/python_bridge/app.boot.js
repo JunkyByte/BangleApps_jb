@@ -29,8 +29,10 @@ function wait_connection(from_notification, show_messages){
   btdatareceiver.on('disconnect', function(){
     if (show_messages)
       E.showMessage('Disconnected', 'python_bridge');
-    NRF.disconnect();
-    Bangle.reset();
+    NRF.sleep();
+    setTimeout(() => {
+      NRF.wake();
+    }, 1000);
   });
 
   // We might be connected already
@@ -136,10 +138,10 @@ btdatareceiver.wait_connection = wait_connection
 // Add a check on pythonista notifications to set to connectable mode the device
 E.on("notify", function(event){ 
   if (event.preExisting)
-    return
+    return;
 
   if (event.appId !== 'com.omz-software.Pythonista3')
-    return
+    return;
 
   if (event.message === 'connect')
     btdatareceiver.wait_connection(from_notification=true, show_messages=true).then(() => {

@@ -34,10 +34,6 @@ E.on('ANCS',msg=>{
         info.new = true;
       }
 
-      if (info.appId === 'com.omz-software.Pythonista3'){  // Ignore pythonista events
-        return
-      }
-
       E.emit("notify", Object.assign(msg, info));
       Bangle.ancsMessageQueue.shift();
       if (Bangle.ancsMessageQueue.length)
@@ -145,7 +141,9 @@ E.on('notify',msg=>{
     '380':"z",
   };
   var replacer = ""; //(n)=>print('Unknown unicode '+n.toString(16));
-  //if (appNames[msg.appId]) msg.a
+
+  if (msg.appId === 'com.omz-software.Pythonista3')  // Ignore pythonista events
+    return;
 
   require("messages").pushMessage({
     t : msg.event,
