@@ -29,7 +29,7 @@ function tiltfixread(O,S){
 // Note actual mag is 360-m, error in firmware
 exports.read = function (heading) {
   var d = tiltfixread(CALIBDATA.offset,CALIBDATA.scale);
-  return Math.round(newHeading(d, heading));
+  return newHeading(d, heading);
 }
 
 function calibrate(){

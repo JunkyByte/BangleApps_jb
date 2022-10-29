@@ -127,7 +127,7 @@ class Holder {
     this.log = undefined;
     this.ele = undefined;
     this.course = undefined;
-    this._heading = undefined;
+    this._heading = 0;
     this.speed = undefined;
     this.target_pos = undefined;
     this.pnode = undefined;
@@ -143,6 +143,10 @@ class Holder {
     this.THR_CLOSE = 25;
   }
 
+  get heading() {
+    return Math.round(this._heading)
+  }
+
   reset(route) {
     this.route = route;
     this.target_pos = undefined;
@@ -153,10 +157,6 @@ class Holder {
     this.dsegm = undefined;
     this.tot_length = undefined;
     this.was_far = false;
-  }
-
-  get heading() {
-    return mag.read(this._heading)
   }
 
   find_target() {  // https://stackoverflow.com/a/58883850/7063774
@@ -395,7 +395,7 @@ function enFakeData(filename){
     holder.speed = 0;
 
     console.log('Current fake pos: ' + nn + ' Lat ' + holder.lat + ' Lon ' + holder.lon);
-  }, 10000);
+  }, 3000);
 
   closeMenu();
 }
@@ -472,11 +472,12 @@ function draw_frequent(){
   }
 
   // Draw Compass
-  var r = [118, 21, 156, 61];
+  var r = [118, 21, 158, 61];
   g.clearRect(r[0], r[1], r[2], r[3]);
   g.setColor(bg_color[0], bg_color[1], bg_color[2]);
   g.fillRect(r[0], r[1], r[2], r[3]);
-  g.drawImage(get_compass_image(), 138, 40, {rotate: radians(holder.heading), scale: 0.75})
+  console.log('Drawing compass with ' + holder.heading);
+  g.drawImage(get_compass_image(), 138, 40, {rotate: -radians(holder.heading), scale: 0.75})
 
   // Draw arrows
   var delta = undefined;
@@ -552,7 +553,6 @@ function main(){
   require("Font8x12").add(Graphics);
   Bangle.on('kill',function() {Bangle.setCompassPower(0, 'follow_me'); Bangle.setGPSPower(0, 'follow_me')});
 
-  Bangle.on('mag', function(e) {holder._heading = e.heading});
   Bangle.on('GPS', onGPS);
 
   Bangle.setGPSPower(1, "follow_me");
@@ -563,6 +563,10 @@ function main(){
   setInterval(function() {  // Every N seconds update internal infos and decide if you want to draw
     update();
   }, 10000);
+
+  setInterval(function() {
+    holder._heading = mag.read(holder._heading)
+  }, 200);
 
   setInterval(function() {  // Every N seconds update internal infos and decide if you want to draw
     console.log('---- INFOS ----');
