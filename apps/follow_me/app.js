@@ -297,13 +297,6 @@ var route = new Route(route_json);
 
 var holder = new Holder(route);
 
-// FAKE DATA
-var route_trace_json = require("Storage").readJSON('trace.gpx.json');  // TODO
-var route_trace = new Route(route_trace_json);
-// route_trace = undefined;
-//
-
-
 /*
  * The idea is to always have the segment you belong to and the distances from both end points and the segment itself.
  * Given this information what you do is always show heading for following end point, if you are on track you
@@ -326,28 +319,9 @@ function start(){
   holder.update_total_len()
 }
 
-var nn = 0;
-var tt = -1;
-var nstep = 50;
 function update(){
-  // TODO load fake infos
-  if (route_trace !== undefined){
-    tt += 1;
-    if (tt === nstep){
-      nn += 1;
-      tt = 0;
-    }
-
-    holder.lat = route_trace.nodes[nn].lat * (1 - tt/nstep) + route_trace.nodes[nn + 1].lat * tt/nstep
-    holder.lon = route_trace.nodes[nn].lon * (1 - tt/nstep) + route_trace.nodes[nn + 1].lon * tt/nstep
-    holder.ele = route_trace.nodes[nn].ele
-    holder.speed = 0
-    //
-  }
-
-  if (holder.heading === undefined || holder.lat === undefined){
-    console.log(holder.heading + ' ' + holder.lat);
-    E.showMessage('Sensors not ready')
+  if (holder.heading === undefined || holder.lat === undefined){  // TODO: Add indicator that GPS not ready
+    // E.showMessage('Sensors not ready')
     console.log('Sensors not ready');
     return
   }
@@ -360,13 +334,9 @@ function update(){
   holder.update_nodes();
   holder.update_distances();
   holder.find_target();
-
-  // TODO REMOVE
-  console.log('Current fake pos: ' + nn + ' Lat ' + holder.lat + ' Lon ' + holder.lon);
-  console.log('d pnode ' + holder.dpnode + ' d nnode ' + holder.dnnode + ' d segm ' + holder.dsegm);
 }
 
-function show_menu(){
+function showMenu(){
   var mainmenu = {
     "" : {
       "title" : "Menu"
@@ -377,38 +347,81 @@ function show_menu(){
     //     E.showMenu();
     //     draw();
     //   })},
-    "Pick File": pickGPX,
-    "Recalculate" : function() {E.showMenu(); holder.find_endpoints(); draw(true);},
-    "Exit" : function() { E.showMenu(); holder.inmenu = false; draw(true);},
+    "Pick File": () => {pickGPX(openGpx);},
+    "Enable fake data": () => {pickGPX(enFakeData);},
+    "Disable fake data": disableFakeData,
+    "Recalculate": function() {holder.find_endpoints(); closeMenu();},
+    "Exit": closeMenu,
   };
 
   holder.inmenu = true;
   E.showMenu(mainmenu)
 }
 
-function pickGPX() {
+function disableFakeData(){
+  if (fake_interval !== undefined)
+    clearInterval(fake_interval);
+  closeMenu();
+  Bangle.setGPSPower(1, 'follow_me')
+}
+
+function closeMenu(){
+  E.showMenu();
+  holder.inmenu = false;
+  draw(true);
+}
+
+var fake_interval = undefined;
+function enFakeData(filename){
+  var route_trace_json = require("Storage").readJSON(filename);  // TODO
+  var route_trace = new Route(route_trace_json);
+  Bangle.setCompassPower(0, "follow_me");
+
+  // Setup fake data
+  var nn = 0;
+  var tt = -1;
+  var nstep = 50;
+
+  fake_interval = setInterval(function() {  // Every N seconds update internal infos and decide if you want to draw
+    tt += 1;
+    if (tt === nstep){
+      nn += 1;
+      tt = 0;
+    }
+
+    holder.lat = route_trace.nodes[nn].lat * (1 - tt/nstep) + route_trace.nodes[nn + 1].lat * tt/nstep;
+    holder.lon = route_trace.nodes[nn].lon * (1 - tt/nstep) + route_trace.nodes[nn + 1].lon * tt/nstep;
+    holder.ele = route_trace.nodes[nn].ele;
+    holder.speed = 0;
+
+    console.log('Current fake pos: ' + nn + ' Lat ' + holder.lat + ' Lon ' + holder.lon);
+  }, 10000);
+
+  closeMenu();
+}
+
+
+function pickGPX(callback) {
   const menu = {
     '': { 'title': 'Tracks' }
   };
   var found = false;
   require("Storage").list(/\.gpx\.json$/).forEach(filename=>{
     found = true;
-    menu[filename] = ()=>opengpx(filename);
+    menu[filename] = ()=>callback(filename);
   });
   if (!found)
     menu["No GPX found"] = function(){};
-  menu['< Back'] = () => { show_menu(); };
+  menu['< Back'] = showMenu;
   return E.showMenu(menu);
 }
 
-function opengpx(filename){
+function openGpx(filename){
   route_json = require("Storage").readJSON(filename);
   route = new Route(route_json);
   holder.reset(route);
   start();
-  E.showMenu();  // TODO: Create function for closing menu as above (Exit)
-  holder.inmenu = false;
-  draw(true);
+  showMenu();
 }
 
 
@@ -542,10 +555,7 @@ function main(){
   Bangle.on('mag', function(e) {holder._heading = e.heading});
   Bangle.on('GPS', onGPS);
 
-  if (route_trace === undefined){ // TODO
-    Bangle.setGPSPower(1, "follow_me");
-  }
-
+  Bangle.setGPSPower(1, "follow_me");
   Bangle.setCompassPower(1, "follow_me");
   update();
   draw();
@@ -569,7 +579,7 @@ function main(){
 
 //
 setWatch(() => {
-  show_menu();
+  showMenu();
 }, BTN1, {repeat:true});
 var mag = require('magn_tilt');
 if (!require("Storage").readJSON("magnav.json",1))
