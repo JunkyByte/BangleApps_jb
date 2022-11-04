@@ -62,23 +62,20 @@ exports.docalibrate = function (first){
     const msg = "takes 20 seconds";
     function action(b){
       if (b) {
-        g.clearRect(0,24,175,175);
-        g.setColor(g.theme.fg);
+        g.setColor(1, 1, 1);
         g.setFont("Vector",18);
-        g.setFontAlign(0,-1);
-        g.drawString("Fig 8s to",88,50);
-        g.drawString("Calibrate",88,50+18);
-        g.flip();
-        calibrate().then((r)=>{
+        E.showMessage("Fig 8s to\nCalibrate");
+        return calibrate().then((r)=>{
           CALIBDATA=r;
           require("Storage").write("magnav.json",r);
         });
       }
-    }   
+      return Promise.reject();
+    }
     if (first) 
-      E.showAlert(msg,title).then(action.bind(null,true));
+      return E.showAlert(msg,title).then(action.bind(null,true));
     else 
-      E.showPrompt(msg,{title:title,buttons:{"Start":true,"Cancel":false}}).then(action);
+      return E.showPrompt(msg,{title:title,buttons:{"Start":true,"Cancel":false}}).then(action);
 }
 
 var calibrating=false;

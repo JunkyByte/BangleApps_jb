@@ -6,6 +6,14 @@ function get_bg_image(){
   return require("heatshrink").decompress(atob("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"));
 }
 
+function get_altitude_image(){
+  return require("heatshrink").decompress(atob("kEgwMB/4AO/l/AYP4j4DB+OfAYPz54DFBYYTD/1+n4gCBAX8CAX5DAU544TBifnBwPD+YDB44DB/Pv/IDBAIOfBoUP8YDBp4ZB/1nEoXnIwZzHN54A=="));
+}
+
+function get_diagarrow_image(){
+  return require("heatshrink").decompress(atob("kEgwMB/4AkgYCB/wqD8IDC4IDCxIDCjITCnIDB/l7AYP4BwXxAYXjAYXHAYWPAYXfLMo"));
+}
+
 function bigThenSmall(big, small, x, y) {
   g.setFont("7x11Numeric7Seg", 2);
   g.drawString(big, x, y);
@@ -120,12 +128,13 @@ function indexOfSmallest(a) {
  return lowest;
 }
 
+
 class Holder {
   constructor(route) {
     this.route = route;
     this.lat = undefined;
     this.log = undefined;
-    this.ele = undefined;
+    this.alt = 0;
     this.course = undefined;
     this._heading = 0;
     this.speed = undefined;
@@ -135,7 +144,10 @@ class Holder {
     this.dpnode = undefined;
     this.dnnode = undefined;
     this.dsegm = undefined;
-    this.tot_length = undefined;
+    this.tot_length = 0;
+    this.start_length = 0;
+    this.tot_up = 0;
+    this.tot_down = 0;
     this.inmenu = false;
     this.was_far = false;
     this.did_start = false;
@@ -157,6 +169,7 @@ class Holder {
     this.dsegm = undefined;
     this.tot_length = undefined;
     this.was_far = false;
+    this.start_length = undefined;
   }
 
   find_target() {  // https://stackoverflow.com/a/58883850/7063774
@@ -246,13 +259,32 @@ class Holder {
     this.dnnode = distance(this.lat, this.lon, this.nnode.lat, this.nnode.lon);
   }
 
+  update_start_len() {
+    this.start_length = 0;
+    for (let idx = 0; idx < this.route.len - 1; idx++){
+      var pnode = this.route.nodes[idx];
+      var nnode = this.route.nodes[idx + 1];
+      this.start_length += distance(pnode.lat, pnode.lon, nnode.lat, nnode.lon);
+    }
+  }
+
   update_total_len() {
     this.tot_length = 0;
+    this.tot_up = 0;
+    this.tot_down = 0;
     for (let idx = route.get_node_idx(holder.pnode); idx < this.route.len - 1; idx++){
       var pnode = this.route.nodes[idx];
       var nnode = this.route.nodes[idx + 1];
       this.tot_length += distance(pnode.lat, pnode.lon, nnode.lat, nnode.lon);
+      var delta_alt = nnode.ele - pnode.ele;
+      if (delta_alt > 0)
+        this.tot_up += delta_alt;
+      else if (delta_alt < 0)
+        this.tot_down += -delta_alt;
     }
+
+    console.log(this.tot_down);
+    console.log(this.tot_up);
   }
 
   find_endpoints() {  // Finds current endpoints assuming no previous information
@@ -341,16 +373,14 @@ function showMenu(){
     "" : {
       "title" : "Menu"
     },
-    // "Calib. mag" : function() {  // TODO complex
-    //   mag.docalibrate(true).then(() => {
-    //     holder.inmenu = false;
-    //     E.showMenu();
-    //     draw();
-    //   })},
     "Pick File": () => {pickGPX(openGpx);},
     "Enable fake data": () => {pickGPX(enFakeData);},
     "Disable fake data": disableFakeData,
     "Recalculate": function() {holder.find_endpoints(); closeMenu();},
+    "Calib. mag" : function() {
+      mag.docalibrate(false).then(() => {
+        closeMenu();
+      })},
     "Exit": closeMenu,
   };
 
@@ -368,14 +398,14 @@ function disableFakeData(){
 function closeMenu(){
   E.showMenu();
   holder.inmenu = false;
-  draw(true);
+  draw();
 }
 
 var fake_interval = undefined;
 function enFakeData(filename){
   var route_trace_json = require("Storage").readJSON(filename);  // TODO
   var route_trace = new Route(route_trace_json);
-  Bangle.setCompassPower(0, "follow_me");
+  Bangle.setGPSPower(0, "follow_me");
 
   // Setup fake data
   var nn = 0;
@@ -421,36 +451,42 @@ function openGpx(filename){
   route = new Route(route_json);
   holder.reset(route);
   start();
-  showMenu();
+  closeMenu();
 }
 
-
-function draw(full){
+var mstate = 1;
+function draw(){
   queueDraw();
   if (holder.inmenu){
     return
   }
 
+  g.setFontAlign(-1, -1);
   g.clear();  // Clear all
   g.drawImage(bg_image, 0, 0);
+  draw_frequent(); // Redraw freq informations
 
-  if (full)
-    draw_frequent(); // Redraw freq informations
+  if (mstate === 0){
+    var r = [15, 22, 120, 60];
+    g.setFont("7x11Numeric7Seg", 3);
+    g.setColor(0, 0, 0);
+    g.drawString(require("locale").time(new Date(), 1), 12, 23);
 
-  var r = [120, 21, 155, 58];
-  g.clearRect(r[0], r[1], r[2], r[3]);
-  g.setColor(bg_color[0], bg_color[1], bg_color[2]);
-  g.fillRect(r[0], r[1], r[2], r[3]);
+    g.setFont("8x12", 2);
+    g.drawString((Math.round(holder.tot_length / 100) / 10).toFixed(1) + 'km', 65, 80); // distance to arrival
+  } else if (mstate === 1){
+    g.setFont("8x12", 2);
+    g.setColor(0, 0, 0);
 
-  g.setFont("7x11Numeric7Seg", 3);
-  g.setColor(0, 0, 0);
-  g.drawString(require("locale").time(new Date(), 1), 12, 23);
+    g.drawImage(get_altitude_image(), 20, 23);
+    g.drawString(holder.alt + 'm', 56, 31);
 
-  g.setFont("8x12", 2);
-  g.drawString((Math.round(holder.tot_length / 100) / 10).toFixed(1) + 'km', 65, 80); // distance to arrival
-
-  if (holder.nnode !== undefined){
-    console.log('nidx ' + route.get_node_idx(holder.nnode));
+    var h = 60;
+    g.drawImage(get_diagarrow_image(), 10, h - 3);
+    g.drawString(holder.tot_up, 41, h);
+    var w = g.stringWidth(holder.tot_up);
+    g.drawImage(get_diagarrow_image(), 46 + w + 8, h + 12, {rotate: Math.PI / 2});
+    g.drawString(holder.tot_down, 51 + w + 16, h);
   }
 }
 
@@ -464,51 +500,58 @@ function log_infos(){
   console.log('dp ' + holder.dpnode);
   console.log('dn ' + holder.dnnode);
   console.log('ds ' + holder.dsegm);
+  if (holder.nnode !== undefined){
+    console.log('nidx ' + route.get_node_idx(holder.nnode));
+  }
 }
 
 function draw_frequent(){
   if (holder.inmenu){
     return
   }
+  g.setFontAlign(-1, -1);
 
   // Draw Compass
   var r = [118, 21, 158, 61];
   g.clearRect(r[0], r[1], r[2], r[3]);
   g.setColor(bg_color[0], bg_color[1], bg_color[2]);
   g.fillRect(r[0], r[1], r[2], r[3]);
-  console.log('Drawing compass with ' + holder.heading);
   g.drawImage(get_compass_image(), 138, 40, {rotate: -radians(holder.heading), scale: 0.75})
 
-  // Draw arrows
-  var delta = undefined;
-  var b_target = undefined;
-  if (holder.target_pos !== undefined){
-    b_target = bearing(holder.lat, holder.lon, holder.target_pos[0], holder.target_pos[1]);
-    delta = delta_angle(b_target, holder.heading);
-    var w = undefined;
-    var rot = undefined;
+  if (mstate === 0){
+    // Draw arrows
+    var delta = undefined;
+    var b_target = undefined;
+    if (holder.target_pos !== undefined){
+      b_target = bearing(holder.lat, holder.lon, holder.target_pos[0], holder.target_pos[1]);
+      delta = delta_angle(b_target, holder.heading);
+      var w = undefined;
+      var rot = undefined;
 
-    var d = (Math.abs(delta) > 30);
-    if (d && delta < 30){ // Right arrow
-      w = 142;
-      rot = 180;
-    } else if (d && delta > -30) {
-      w = 31;
-      rot = 0;
-    }
+      var d = (Math.abs(delta) > 30);
+      if (d && delta < 30){ // Right arrow
+        w = 142;
+        rot = 180;
+      } else if (d && delta > -30) {
+        w = 31;
+        rot = 0;
+      }
 
-    var r1 = [135, 75, 145, 90];
-    var r2 = [31, 75, 50, 90];
-    g.setColor(bg_color[0], bg_color[1], bg_color[2]);
-    g.clearRect(r1[0], r1[1], r1[2], r1[3]);
-    g.fillRect(r1[0], r1[1], r1[2], r1[3]);
-    g.clearRect(r2[0], r2[1], r2[2], r2[3]);
-    g.fillRect(r2[0], r2[1], r2[2], r2[3]);
-    g.drawImage(get_arrowg_image(), 31, 92, {rotate: 0});
-    g.drawImage(get_arrowg_image(), 142, 92, {rotate: Math.PI});
-    if (d){
-      g.drawImage(get_arrow_image(), w, 92, {rotate: radians(rot)});
+      var r1 = [135, 75, 145, 90];
+      var r2 = [31, 75, 50, 90];
+      g.setColor(bg_color[0], bg_color[1], bg_color[2]);
+      g.clearRect(r1[0], r1[1], r1[2], r1[3]);
+      g.fillRect(r1[0], r1[1], r1[2], r1[3]);
+      g.clearRect(r2[0], r2[1], r2[2], r2[3]);
+      g.fillRect(r2[0], r2[1], r2[2], r2[3]);
+      g.drawImage(get_arrowg_image(), 31, 92, {rotate: 0});
+      g.drawImage(get_arrowg_image(), 142, 92, {rotate: Math.PI});
+      if (d){
+        g.drawImage(get_arrow_image(), w, 92, {rotate: radians(rot)});
+      }
     }
+  } else if (mstate === 1){
+
   }
 }
 
@@ -541,7 +584,7 @@ function queueDraw() {
   if (drawTimeout) clearTimeout(drawTimeout);
   drawTimeout = setTimeout(function() {
     drawTimeout = undefined;
-    draw(true);
+    draw();
   }, 60000 - (Date.now() % 60000));
 }
 
@@ -580,6 +623,9 @@ function main(){
     }, 500);
   }, 5000);
 }
+
+// Switch menus on tap
+Bangle.on('touch', function(data) {mstate = (mstate + 1) % 2; draw();});
 
 //
 setWatch(() => {
