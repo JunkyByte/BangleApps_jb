@@ -131,32 +131,18 @@ function indexOfSmallest(a) {
 
 class Holder {
   constructor(route) {
-    this.route = route;
+    this.reset(route);
     this.lat = undefined;
     this.log = undefined;
     this.alt = 0;
     this.course = undefined;
     this._heading = 0;
     this.speed = undefined;
-    this.target_pos = undefined;
-    this.pnode = undefined;
-    this.nnode = undefined;
-    this.dpnode = undefined;
-    this.dnnode = undefined;
-    this.dsegm = undefined;
-    this.tot_length = 0;
     this.start_length = 0;
-    this.tot_up = 0;
-    this.tot_down = 0;
     this.inmenu = false;
-    this.was_far = false;
     this.did_start = false;
     this.THR_FAR = 26;
     this.THR_CLOSE = 25;
-  }
-
-  get heading() {
-    return Math.round(this._heading)
   }
 
   reset(route) {
@@ -167,9 +153,34 @@ class Holder {
     this.dpnode = undefined;
     this.dnnode = undefined;
     this.dsegm = undefined;
-    this.tot_length = undefined;
     this.was_far = false;
-    this.start_length = undefined;
+    this.tot_length = 0;
+    this.start_length = 0;
+    this.min_alt = 0;
+    this.max_alt = 0;
+    this.tot_up = 0;
+    this.tot_down = 0;
+    this.update_alt();
+    this.update_start_len();
+  }
+
+  get heading() {
+    return Math.round(this._heading)
+  }
+
+  update_alt() {
+    // Altitude overview
+    // First find max/min
+    this.max_alt = Number.NEGATIVE_INFINITY;
+    this.min_alt = Number.POSITIVE_INFINITY;
+    for (let idx = 0; idx < this.route.len; idx++){
+      var node = this.route.nodes[idx];
+      if (node.ele > this.max_alt)
+        this.max_alt = node.ele;
+      if (node.ele < this.min_alt)
+        this.min_alt = node.ele;
+    }
+
   }
 
   find_target() {  // https://stackoverflow.com/a/58883850/7063774
@@ -323,10 +334,9 @@ class Holder {
   }
 }
 
-var route_json = require("Storage").readJSON('og.gpx.json');
+var route_json = require("Storage").readJSON('canazei-campitello.gpx.json');
 // var route_json = require("Storage").readJSON('prom_sirio.json');
 var route = new Route(route_json);
-
 var holder = new Holder(route);
 
 /*
@@ -454,7 +464,7 @@ function openGpx(filename){
   closeMenu();
 }
 
-var mstate = 1;
+var mstate = 2;
 function draw(){
   queueDraw();
   if (holder.inmenu){
@@ -483,11 +493,66 @@ function draw(){
 
     var h = 60;
     g.drawImage(get_diagarrow_image(), 10, h - 3);
-    g.drawString(holder.tot_up, 41, h);
-    var w = g.stringWidth(holder.tot_up);
+    g.drawString(parseInt(holder.tot_up), 41, h);
+    var w = g.stringWidth(parseInt(holder.tot_up));
     g.drawImage(get_diagarrow_image(), 46 + w + 8, h + 12, {rotate: Math.PI / 2});
-    g.drawString(holder.tot_down, 51 + w + 16, h);
+    g.drawString(parseInt(holder.tot_down), 51 + w + 16, h);
+  } else if (mstate === 2){
+    if (holder.min_alt === 0 && holder.max_alt === 0)
+      return;
+
+    var ox = 45;
+    var oy = 135;
+    var width = 120;
+    var height = 100;
+    var delta = holder.max_alt - holder.min_alt
+    var jump = Math.ceil(holder.route.len / width);
+    var j_size = Math.ceil((width - ox) / holder.route.len);  // TODO
+    var curr_node_idx = undefined;
+    if (holder.pnode !== undefined)
+      curr_node_idx = holder.route.get_node_idx(holder.pnode);
+    var curr_x = ox;
+    var ele;
+    var end_y;
+    var prev_y;
+    g.setColor(0, 0, 0);
+    g.setFont("8x12");
+    g.drawString(parseInt(holder.max_alt) + '-', 15, oy - height - 5)
+    g.drawString(parseInt(holder.min_alt), 15, oy - 5)
+    for (let idx = 0; idx < holder.route.len; idx+=jump){
+      ele = holder.route.nodes[idx].ele;
+      end_y = oy - ((ele - holder.min_alt) / delta) * height;
+      g.drawLine(curr_x, end_y, curr_x, oy);
+      if (idx > 0 && holder.route.len < 100){
+         g.drawLineAA(curr_x - j_size, prev_y, curr_x, end_y);
+      }
+      if (curr_node_idx !== undefined && idx - curr_node_idx > 0 && idx - curr_node_idx <= jump) {
+        draw_pos_arrow(curr_x, end_y - 45);
+        g.setColor(1, 0, 0);
+        g.fillCircle(curr_x, end_y, 3)
+        g.setColor(0, 0, 0);
+      }
+      curr_x += j_size;
+      prev_y = end_y;
+    }
   }
+}
+
+function draw_pos_arrow(x, y){
+  // (x, y) is pixel for arrow head
+  g.setColor(0, 0, 0);
+  g.drawLine(x, y, x, y + 30);
+  g.drawLine(x + 1, y, x + 1, y + 30);
+  g.drawLine(x - 1, y, x - 1, y + 30);
+
+  g.drawLine(x, y + 30, x - 5, y + 20);
+  g.drawLine(x, y + 30, x + 5, y + 20);
+
+  g.drawLine(x + 1, y + 30, x - 4, y + 20);
+  g.drawLine(x + 1, y + 30, x + 6, y + 20);
+
+  g.drawLine(x - 1, y + 30, x - 6, y + 20);
+  g.drawLine(x - 1, y + 30, x + 4, y + 20);
 }
 
 function log_infos(){
@@ -501,7 +566,7 @@ function log_infos(){
   console.log('dn ' + holder.dnnode);
   console.log('ds ' + holder.dsegm);
   if (holder.nnode !== undefined){
-    console.log('nidx ' + route.get_node_idx(holder.nnode));
+    console.log('nidx ' + holder.route.get_node_idx(holder.nnode));
   }
 }
 
@@ -512,11 +577,13 @@ function draw_frequent(){
   g.setFontAlign(-1, -1);
 
   // Draw Compass
-  var r = [118, 21, 158, 61];
-  g.clearRect(r[0], r[1], r[2], r[3]);
-  g.setColor(bg_color[0], bg_color[1], bg_color[2]);
-  g.fillRect(r[0], r[1], r[2], r[3]);
-  g.drawImage(get_compass_image(), 138, 40, {rotate: -radians(holder.heading), scale: 0.75})
+  if (mstate === 0 || mstate === 1){
+    var r = [118, 21, 158, 61];
+    g.clearRect(r[0], r[1], r[2], r[3]);
+    g.setColor(bg_color[0], bg_color[1], bg_color[2]);
+    g.fillRect(r[0], r[1], r[2], r[3]);
+    g.drawImage(get_compass_image(), 138, 40, {rotate: -radians(holder.heading), scale: 0.75})
+  }
 
   if (mstate === 0){
     // Draw arrows
@@ -608,6 +675,10 @@ function main(){
   }, 10000);
 
   setInterval(function() {
+    draw();
+  }, 15000);
+
+  setInterval(function() {
     holder._heading = mag.read(holder._heading)
   }, 200);
 
@@ -625,7 +696,7 @@ function main(){
 }
 
 // Switch menus on tap
-Bangle.on('touch', function(data) {mstate = (mstate + 1) % 2; draw();});
+Bangle.on('touch', function(data) {if (holder.inmenu) return; mstate = (mstate + 1) % 3; draw();});
 
 //
 setWatch(() => {
