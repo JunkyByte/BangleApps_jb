@@ -1,3 +1,5 @@
+const STORAGE=require('Storage');
+
 function get_compass_image(){
   return require("heatshrink").decompress(atob("kEqwMB//+v////8n4DJ/EfAZPwh4DF8EHAZPAgYDJwA+BAYsAAYJOBAYn+AYN/AY/8AYM/AY0f/ADG+ADBh4DH8EBwEHKQIBCBoMH4AdBgfAFIIDBHIIVBJIOBwYDB4JxDQIefAYP5A="));
 }
@@ -103,7 +105,8 @@ class Node {
 }
 
 class Route {
-  constructor(route_json) {
+  constructor(routeName, route_json) {
+    this.routeName = routeName;
     this.len = route_json.length;
     this.nodes = [];
     for (var idx in route_json) {
@@ -121,19 +124,81 @@ class Route {
 }
 
 function indexOfSmallest(a) {
- var lowest = 0;
- for (var i = 1; i < a.length; i++) {
-  if (a[i] < a[lowest]) lowest = i;
- }
- return lowest;
+  var lowest = 0;
+  for (var i = 1; i < a.length; i++) {
+    if (a[i] < a[lowest]) lowest = i;
+  }
+  return lowest;
 }
 
 
+class StateHolder {
+  constructor(state){
+    this.trackName = undefined;
+    this.saved = undefined;
+    this.gpsTrack = [];
+    this.courseTrack = [];
+    this.altTrack = [];
+    this.startTime = undefined;
+    this.up = 0;
+    this.down = 0;
+
+    // Reload state
+    if (state === undefined)
+      return;
+
+    for (const key in state) {
+      this[key] = state[key];
+    }
+
+    this.active = false;
+  }
+
+  enable(){
+    this.active = true;
+    STORAGE.writeJSON('follow_me.last_track.json', this.trackName)
+  }
+
+  updateState(){
+    if (!this.active || holder.lat === undefined || holder.lon === undefined)
+      return;
+
+    if (this.trackName === undefined)
+      this.trackName = holder.route.routeName;
+
+    if (this.gpsTrack[-1] === undefined || distance(holder.lat, holder.lon, this.gpsTrack[-1][0], this.gpsTrack[-1][1]) > 10){
+      this.gpsTrack.push([holder.lat, holder.lon])
+      this.courseTrack.push(holder.course);
+      this.altTrack.push(holder.alt);
+    }
+  }
+
+  saveState(){
+    this.saved = Date.now();
+    STORAGE.writeJSON(this.trackName.substring(0, this.trackName.indexOf('.json')) + '.state.json'), this);
+  }
+}
+
+
+function onPressure(e) {
+  if (!holder.state.active)
+    return;
+  let diff = holder.alt - e.altitude;
+  if (Math.abs(diff) > 3){
+    if (diff > 0){
+      holder.state.up += diff;
+    } else {
+      holder.state.down -= diff;
+    }
+  }
+}
+
 class Holder {
-  constructor(route) {
-    this.reset(route);
+  constructor(route, state) {
+    this.reset(route, state);
     this.lat = undefined;
     this.log = undefined;
+    this.state = 0;
     this.alt = 0;
     this.course = undefined;
     this._heading = 0;
@@ -145,7 +210,8 @@ class Holder {
     this.THR_CLOSE = 25;
   }
 
-  reset(route) {
+  reset(route, state) {
+    this.state = new StateHolder(state);
     this.route = route;
     this.target_pos = undefined;
     this.pnode = undefined;
@@ -232,7 +298,7 @@ class Holder {
       console.log('[CLOSE NNODE] We are close to nnode, updating to next one');
       this.update_total_len();  // TODO
       // Update nodes p <- n and n <- n + 1
-      var n_idx = route.get_node_idx(this.nnode);
+      var n_idx = this.route.get_node_idx(this.nnode);
 
       if (n_idx == this.route.len - 1){
         console.log('[LAST NODE] nnode is already last node');
@@ -250,7 +316,7 @@ class Holder {
       console.log('[CLOSE PNODE] We are close to previous node, updating backwards');
       // Update nodes n <- p and p <- p - 1
       this.update_total_len();  // TODO
-      var p_idx = route.get_node_idx(this.pnode);
+      var p_idx = this.route.get_node_idx(this.pnode);
 
       if (p_idx == 0){
         console.log('[FIRST NODE] pnode is already first node');
@@ -283,7 +349,7 @@ class Holder {
     this.tot_length = 0;
     this.tot_up = 0;
     this.tot_down = 0;
-    for (let idx = route.get_node_idx(holder.pnode); idx < this.route.len - 1; idx++){
+    for (let idx = this.route.get_node_idx(holder.pnode); idx < this.route.len - 1; idx++){
       var pnode = this.route.nodes[idx];
       var nnode = this.route.nodes[idx + 1];
       this.tot_length += distance(pnode.lat, pnode.lon, nnode.lat, nnode.lon);
@@ -334,27 +400,6 @@ class Holder {
   }
 }
 
-var route_json = require("Storage").readJSON('canazei-campitello.gpx.json');
-// var route_json = require("Storage").readJSON('prom_sirio.json');
-var route = new Route(route_json);
-var holder = new Holder(route);
-
-/*
- * The idea is to always have the segment you belong to and the distances from both end points and the segment itself.
- * Given this information what you do is always show heading for following end point, if you are on track you
- * should be on the segment so this makes sense.
- * If you become too far from the segment itself the heading must become to the segment so that you can get back on track.
- * The heading should be given by both compass and gps direction, this should allow consistent tracking while you are moving
- * but also decent one when you are still. (maybe is better to have a linear interp between end point and segment so that
- * if you are on track it mostly is about end point, if you are far from track it leads you back to the segment)
- * The coordinates are in lat lon which makes everything a bit more complex
- * When to switch endpoint?
- * End point distance should decrease, when < THRESHOLD -> start point becomes end point and end point -> next end point
- * In case you go back we can do the opposite (take care after ^ you need to get far from start point before it can switch back)
- * to prevent jumps
- * TODO: Fallback if you dont get close enough to end point it should switch to following one if you progress anyway? I guess just manually recalculate
-*/
-
 function start(){
   // Start by finding end points
   holder.find_endpoints()
@@ -370,6 +415,7 @@ function update(){
 
   if (!holder.did_start){
     start();
+    draw();
     holder.did_start = true;
   }
   
@@ -413,14 +459,14 @@ function closeMenu(){
 
 var fake_interval = undefined;
 function enFakeData(filename){
-  var route_trace_json = require("Storage").readJSON(filename);  // TODO
-  var route_trace = new Route(route_trace_json);
+  var route_trace_json = STORAGE.readJSON(filename);  // TODO
+  var route_trace = new Route(filename, route_trace_json);
   Bangle.setGPSPower(0, "follow_me");
 
   // Setup fake data
   var nn = 0;
   var tt = -1;
-  var nstep = 50;
+  var nstep = 10;
 
   fake_interval = setInterval(function() {  // Every N seconds update internal infos and decide if you want to draw
     tt += 1;
@@ -435,7 +481,7 @@ function enFakeData(filename){
     holder.speed = 0;
 
     console.log('Current fake pos: ' + nn + ' Lat ' + holder.lat + ' Lon ' + holder.lon);
-  }, 3000);
+  }, 1500);
 
   closeMenu();
 }
@@ -446,7 +492,7 @@ function pickGPX(callback) {
     '': { 'title': 'Tracks' }
   };
   var found = false;
-  require("Storage").list(/\.gpx\.json$/).forEach(filename=>{
+  STORAGE.list(/\.gpx\.json$/).forEach(filename=>{
     found = true;
     menu[filename] = ()=>callback(filename);
   });
@@ -457,26 +503,43 @@ function pickGPX(callback) {
 }
 
 function openGpx(filename){
-  route_json = require("Storage").readJSON(filename);
-  route = new Route(route_json);
-  holder.reset(route);
+  route_json = STORAGE.readJSON(filename);
+  route = new Route(filename, route_json);
+  state = STORAGE.readJSON(filename.substring(0, filename.indexOf('.json')) + '.state.json') || undefined;
+  holder.reset(route, state);
+  delete state;
   start();
   closeMenu();
 }
 
-var mstate = 2;
+var statedict = {
+  'default': 0,
+  'map': 1,
+  'infos': 2,
+  'altim': 3
+};
+
+var mstate = statedict['altim'];
+var drawInterval = undefined;
+var panOffset = [0, 0];
+var scale = 200;
 function draw(){
   queueDraw();
   if (holder.inmenu){
     return
   }
 
+  var updateInterval = 30000;  // Default update every 30s
+  if (drawInterval !== undefined)
+    clearTimeout(drawInterval);
+  drawInterval = setTimeout(draw, updateInterval);
+
   g.setFontAlign(-1, -1);
   g.clear();  // Clear all
   g.drawImage(bg_image, 0, 0);
   draw_frequent(); // Redraw freq informations
 
-  if (mstate === 0){
+  if (mstate === statedict['default']){
     var r = [15, 22, 120, 60];
     g.setFont("7x11Numeric7Seg", 3);
     g.setColor(0, 0, 0);
@@ -484,7 +547,7 @@ function draw(){
 
     g.setFont("8x12", 2);
     g.drawString((Math.round(holder.tot_length / 100) / 10).toFixed(1) + 'km', 65, 80); // distance to arrival
-  } else if (mstate === 1){
+  } else if (mstate === statedict['infos']){
     g.setFont("8x12", 2);
     g.setColor(0, 0, 0);
 
@@ -497,7 +560,8 @@ function draw(){
     var w = g.stringWidth(parseInt(holder.tot_up));
     g.drawImage(get_diagarrow_image(), 46 + w + 8, h + 12, {rotate: Math.PI / 2});
     g.drawString(parseInt(holder.tot_down), 51 + w + 16, h);
-  } else if (mstate === 2){
+  } else if (mstate === statedict['altim']){
+    updateInterval = 10000;
     if (holder.min_alt === 0 && holder.max_alt === 0)
       return;
 
@@ -527,7 +591,7 @@ function draw(){
          g.drawLineAA(curr_x - j_size, prev_y, curr_x, end_y);
       }
       if (curr_node_idx !== undefined && idx - curr_node_idx > 0 && idx - curr_node_idx <= jump) {
-        draw_pos_arrow(curr_x, end_y - 45);
+        draw_pos_arrow(curr_x, end_y - 30);
         g.setColor(1, 0, 0);
         g.fillCircle(curr_x, end_y, 3)
         g.setColor(0, 0, 0);
@@ -535,24 +599,81 @@ function draw(){
       curr_x += j_size;
       prev_y = end_y;
     }
+  } else if (mstate === statedict['map']){
+    // map display, draw prev, curr, next segment
+    updateInterval = 5000;
+    if (holder.pnode === undefined){
+      g.setColor(0, 0, 0);
+      g.setFont("8x12", 2);
+      g.drawString('waiting gps', 27, 68);
+      return;
+    }
+
+    var drawOffset = [88, 88];
+    var boundX = [12, 165];
+    var boundY = [15, 152];
+    var pnodeidx = holder.route.get_node_idx(holder.pnode);
+    // TODO: What should be drawn? Here close to position, but if you pan it breaks..
+    for (let idx = Math.max(0, pnodeidx - 20); idx < Math.min(pnodeidx + 20, holder.route.len - 1); idx++){
+      var pnode = holder.route.nodes[idx];
+      var nnode = holder.route.nodes[idx + 1];
+
+      // Length in km of 1° of latitude = always 111.32 km
+      // Length in km of 1° of longitude = 40075 km * cos( latitude ) / 360
+      var x0 = (pnode.lat - holder.lat) * 111.32
+      var y0 = (pnode.lon - holder.lon) * 40075 * Math.cos(holder.lat) / 360
+      var x1 = (nnode.lat - holder.lat) * 111.32
+      var y1 = (nnode.lon - holder.lon) * 40075 * Math.cos(holder.lat) / 360
+      // console.log(x0 + ' ' + y0 + ' ' + x1 + ' ' + y1);
+
+      // Our position is (0, 0) + draw_offset
+      var a = parseInt(x0 * scale) + drawOffset[0] + panOffset[0]
+      var b = parseInt(y0 * scale) + drawOffset[1] + panOffset[1]
+      var c = parseInt(x1 * scale) + drawOffset[0] + panOffset[0]
+      var d = parseInt(y1 * scale) + drawOffset[1] + panOffset[1]
+      // console.log(a + ' ' + b + ' ' + c + ' ' + d);
+
+      if (a < boundX[0] || a > boundX[1] || c < boundX[0] || c > boundX[1])
+        continue;
+      if (b < boundY[0] || b > boundY[1] || d < boundY[0] || d > boundY[1])
+        continue;
+
+      g.setColor(0, 0, 0);
+      g.drawLine(a, b, c, d);
+
+      if (idx === 0){
+        g.setColor(0, 1, 0);
+        g.fillCircle(a, b, 3)
+      } else if (idx === holder.route.len - 2){
+        g.setColor(0, 0, 1);
+        g.fillCircle(c, d, 3)
+      }
+    }
+    var opt = {rotate: -radians(holder.heading), scale: 0.4};
+    g.drawImage(get_compass_image(), drawOffset[0] + panOffset[0] + 1, drawOffset[1] + panOffset[1] - 1, opt)
   }
+
+  // Trick to have a custom time interval while using return inside the function
+  clearTimeout(drawInterval);
+  drawInterval = setTimeout(draw, updateInterval);
 }
 
 function draw_pos_arrow(x, y){
   // (x, y) is pixel for arrow head
+  var h = 20;
   g.setColor(0, 0, 0);
-  g.drawLine(x, y, x, y + 30);
-  g.drawLine(x + 1, y, x + 1, y + 30);
-  g.drawLine(x - 1, y, x - 1, y + 30);
+  g.drawLine(x, y, x, y + h);
+  g.drawLine(x + 1, y, x + 1, y + h);
+  g.drawLine(x - 1, y, x - 1, y + h);
 
-  g.drawLine(x, y + 30, x - 5, y + 20);
-  g.drawLine(x, y + 30, x + 5, y + 20);
+  g.drawLine(x, y + h, x - 5, y + h - 10);
+  g.drawLine(x, y + h, x + 5, y + h - 10);
 
-  g.drawLine(x + 1, y + 30, x - 4, y + 20);
-  g.drawLine(x + 1, y + 30, x + 6, y + 20);
+  g.drawLine(x + 1, y + h, x - 4, y + h - 10);
+  g.drawLine(x + 1, y + h, x + 6, y + h - 10);
 
-  g.drawLine(x - 1, y + 30, x - 6, y + 20);
-  g.drawLine(x - 1, y + 30, x + 4, y + 20);
+  g.drawLine(x - 1, y + h, x - 6, y + h - 10);
+  g.drawLine(x - 1, y + h, x + 4, y + h - 10);
 }
 
 function log_infos(){
@@ -577,7 +698,7 @@ function draw_frequent(){
   g.setFontAlign(-1, -1);
 
   // Draw Compass
-  if (mstate === 0 || mstate === 1){
+  if (mstate === statedict['default'] || mstate === statedict['infos']){
     var r = [118, 21, 158, 61];
     g.clearRect(r[0], r[1], r[2], r[3]);
     g.setColor(bg_color[0], bg_color[1], bg_color[2]);
@@ -585,7 +706,7 @@ function draw_frequent(){
     g.drawImage(get_compass_image(), 138, 40, {rotate: -radians(holder.heading), scale: 0.75})
   }
 
-  if (mstate === 0){
+  if (mstate === statedict['default']){
     // Draw arrows
     var delta = undefined;
     var b_target = undefined;
@@ -617,8 +738,6 @@ function draw_frequent(){
         g.drawImage(get_arrow_image(), w, 92, {rotate: radians(rot)});
       }
     }
-  } else if (mstate === 1){
-
   }
 }
 
@@ -655,28 +774,56 @@ function queueDraw() {
   }, 60000 - (Date.now() % 60000));
 }
 
+
+fileName = STORAGE.readJSON('follow_me.last_track.json') || 'og.gpx.json'
+var route_json = STORAGE.readJSON(fileName);
+var route = new Route(fileName, route_json);
+var state = STORAGE.readJSON(fileName.substring(0, fileName.indexOf('.json')) + '.state.json') || undefined;
+var holder = new Holder(route, state);
+delete state;
+
+/*
+ * The idea is to always have the segment you belong to and the distances from both end points and the segment itself.
+ * Given this information what you do is always show heading for following end point, if you are on track you
+ * should be on the segment so this makes sense.
+ * If you become too far from the segment itself the heading must become to the segment so that you can get back on track.
+ * The heading should be given by both compass and gps direction, this should allow consistent tracking while you are moving
+ * but also decent one when you are still. (maybe is better to have a linear interp between end point and segment so that
+ * if you are on track it mostly is about end point, if you are far from track it leads you back to the segment)
+ * The coordinates are in lat lon which makes everything a bit more complex
+ * When to switch endpoint?
+ * End point distance should decrease, when < THRESHOLD -> start point becomes end point and end point -> next end point
+ * In case you go back we can do the opposite (take care after ^ you need to get far from start point before it can switch back)
+ * to prevent jumps
+ * TODO: Fallback if you dont get close enough to end point it should switch to following one if you progress anyway? I guess just manually recalculate
+*/
+
+
 var bg_image = get_bg_image();
 var bg_color = [0.917, 0.909, 0.803];
 function main(){
   // Setup sensors and callbacks updating data
   require("Font7x11Numeric7Seg").add(Graphics);
   require("Font8x12").add(Graphics);
-  Bangle.on('kill',function() {Bangle.setCompassPower(0, 'follow_me'); Bangle.setGPSPower(0, 'follow_me')});
+  Bangle.on('kill',function() {
+    Bangle.setCompassPower(0, 'follow_me');
+    Bangle.setGPSPower(0, 'follow_me');
+    Bangle.setBarometerPower(0, 'follow_me');
+    holder.state.saveState();
+  });
 
   Bangle.on('GPS', onGPS);
+  Bangle.on("pressure", onPressure);
 
   Bangle.setGPSPower(1, "follow_me");
   Bangle.setCompassPower(1, "follow_me");
+  Bangle.setBarometerPower(1, "follow_me");
   update();
   draw();
 
   setInterval(function() {  // Every N seconds update internal infos and decide if you want to draw
     update();
   }, 10000);
-
-  setInterval(function() {
-    draw();
-  }, 15000);
 
   setInterval(function() {
     holder._heading = mag.read(holder._heading)
@@ -696,16 +843,44 @@ function main(){
 }
 
 // Switch menus on tap
-Bangle.on('touch', function(data) {if (holder.inmenu) return; mstate = (mstate + 1) % 3; draw();});
+var last_drag = new Date();
+Bangle.on('touch', function(data) {
+  var t = new Date();
+  if (t - last_drag < 200 || holder.inmenu)
+    return;
+  mstate = (mstate + 1) % Object.keys(statedict).length;
+  draw();
+});
+
+Bangle.on('drag', function(e) {
+  if (e.b === 0 || holder.inmenu || mstate !== statedict['map'])
+    return;
+
+  var k = Math.abs(e.dx) < Math.abs(e.dy) ? 1: 0;
+  if (e.x > 160 && k === 1){
+    scale = Math.max(0, scale + 1 / 2 * e.dy);
+  } else {
+    panOffset[k] += 1 / 2 * (k === 0 ? e.dx: e.dy);
+    console.log(panOffset);
+  }
+
+  var t = new Date();
+  if (t - last_drag > 150){
+    last_drag = new Date();
+    draw();
+  }
+});
 
 //
 setWatch(() => {
   showMenu();
 }, BTN1, {repeat:true});
 var mag = require('magn_tilt');
-if (!require("Storage").readJSON("magnav.json",1))
+if (!STORAGE.readJSON("magnav.json",1))
   mag.docalibrate(true).then(() => {
     main();
   });
 else
   main();
+
+enFakeData('trace.gpx.json')
