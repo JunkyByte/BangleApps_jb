@@ -190,14 +190,13 @@ class StateHolder {
 
     var l = this.gpsTrack.length;
     if (this.gpsTrack[-1] === undefined || distance(holder.lat, holder.lon, this.gpsTrack[l-1][0], this.gpsTrack[l-1][1]) > 10){
-      console.log('Moved some distance! appending to state')
+      console.log('Updating state')
       if (l > 0)
         this.distanceT += distance(this.gpsTrack[l-1][0], this.gpsTrack[l-1][1], holder.lat, holder.lon);
       this.gpsTrack.push([holder.lat, holder.lon])
       this.courseTrack.push(holder.course);
       this.altTrack.push(holder.alt);
     }
-
     this.updateElapsed();
   }
 
@@ -224,7 +223,7 @@ class StateHolder {
   }
 
   saveState(){
-    if (this.trackName === undefined)
+    if (this.trackName === undefined || this.trackName === 'trackback')
       return;
     this.saved = Date.now();
 
@@ -389,6 +388,8 @@ class Holder {
   }
 
   update_distances() {
+    if (this.pnode === undefined || this.nnode === undefined)
+      return;
     this.dsegm = dist_segment(this.lat, this.lon, this.pnode.lat, this.pnode.lon, this.nnode.lat, this.nnode.lon);
     this.dpnode = distance(this.lat, this.lon, this.pnode.lat, this.pnode.lon);
     this.dnnode = distance(this.lat, this.lon, this.nnode.lat, this.nnode.lon);
@@ -404,6 +405,9 @@ class Holder {
   }
 
   update_total_len() {
+    if (this.route.len == 0)
+      return;
+
     this.tot_length = 0;
     this.tot_up = 0;
     this.tot_down = 0;
@@ -423,6 +427,9 @@ class Holder {
   }
 
   find_endpoints() {  // Finds current endpoints assuming no previous information
+    if (this.route.len == 0)
+      return;
+
     var distances = [];
     for (let idx = 0; idx < this.route.len; idx++){
       var node = this.route.nodes[idx];
@@ -494,6 +501,7 @@ function showMenu(){
     "Pause": () => {holder.state.disable(); closeMenu();},
     "Reset": () => {holder.state = new StateHolder(); closeMenu();},
     "Save": () => {holder.state.saveState(); closeMenu();},
+    "Trackback state": () => {pickGPX(trackBack, true)},
     "Recalculate": function() {holder.find_endpoints(); closeMenu();},
     "Calib. mag" : function() {
       mag.docalibrate(false).then(() => {
@@ -504,6 +512,24 @@ function showMenu(){
 
   holder.inmenu = true;
   E.showMenu(mainmenu)
+}
+
+function trackBack(filename){
+  var state_json = STORAGE.readJSON(filename);
+  route_json = [];
+
+  // Create fake route from state file, while reversing order for trackback
+  var pos;
+  var ele;
+  for (var idx=state_json['gpsTrack'].length - 1; idx >= 0; idx--){
+    pos = state_json['gpsTrack'][idx];
+    route_json.push({'lat': pos[0], 'lon': pos[1], 'ele': state_json['altTrack'][idx]});
+  }
+  delete state_json;
+  route = new Route('trackback', route_json);
+  holder.reset(route, undefined);
+  start();
+  closeMenu();
 }
 
 function disableFakeData(){
@@ -551,15 +577,24 @@ function enFakeData(filename){
 }
 
 
-function pickGPX(callback) {
+function pickGPX(callback, isState) {
   const menu = {
     '': { 'title': 'Tracks' }
   };
   var found = false;
-  STORAGE.list(/\.gpx\.json$/).forEach(filename=>{
-    found = true;
-    menu[filename] = ()=>callback(filename);
-  });
+  
+  if (isState){
+    STORAGE.list(/\.gpx\.state\.json$/).forEach(filename=>{
+      found = true;
+      menu[filename] = ()=>callback(filename);
+    });
+  } else {
+    STORAGE.list(/\.gpx\.json$/).forEach(filename=>{
+      found = true;
+      menu[filename] = ()=>callback(filename);
+    });
+  }
+
   if (!found)
     menu["No GPX found"] = function(){};
   menu['< Back'] = showMenu;
@@ -616,7 +651,7 @@ function draw(){
     var deltaM = parseInt(deltas / 60)
     var deltaH = parseInt(deltas / 3600)
     g.setFont("8x12", 2);
-    g.drawString('ET ' + (deltaH < 10? '0' + deltaH : deltaH) + ':' + (deltaM < 10? '0' + deltaM : deltaM), 40, 120);
+    g.drawString('ET ' + (deltaH < 10? '0' + deltaH : deltaH) + ':' + (deltaM < 10? '0' + deltaM : deltaM), 48, 125);
 
   } else if (mstate === statedict['infos']){
     g.setFont("8x12", 2);
@@ -647,8 +682,12 @@ function draw(){
     g.drawString(parseInt(holder.state.down), 51 + w + 16, h);
   } else if (mstate === statedict['altim']){
     updateInterval = 10000;
-    if (holder.min_alt === 0 && holder.max_alt === 0)
+    if (holder.min_alt === 0 && holder.max_alt === 0){
+      g.setColor(0, 0, 0);
+      g.setFont("8x12", 2);
+      g.drawString('no altitude data', 27, 68);
       return;
+    }
 
     var ox = 45;
     var oy = 135;
@@ -860,17 +899,6 @@ function queueDraw() {
 }
 
 
-fileName = STORAGE.readJSON('follow_me.last_track.json') || 'og.gpx.json'
-console.log('Current filename: ' + fileName);
-var route_json = STORAGE.readJSON(fileName);
-var route = new Route(fileName, route_json);
-var state = STORAGE.readJSON(fileName.substring(0, fileName.indexOf('.json')) + '.state.json') || undefined;
-console.log('State file restored: ' + (state !== undefined));
-var holder = new Holder(route, state);
-delete state;
-holder.state.enable();  // TODO: Remove
-
-
 /*
  * The idea is to always have the segment you belong to and the distances from both end points and the segment itself.
  * Given this information what you do is always show heading for following end point, if you are on track you
@@ -889,7 +917,18 @@ holder.state.enable();  // TODO: Remove
 
 var bg_image = get_bg_image();
 var bg_color = [0.917, 0.909, 0.803];
+var holder;
 function main(){
+  fileName = STORAGE.readJSON('follow_me.last_track.json') || 'og.gpx.json'
+  console.log('Current filename: ' + fileName);
+  var route_json = STORAGE.readJSON(fileName);
+  var route = new Route(fileName, route_json);
+  var state = STORAGE.readJSON(fileName.substring(0, fileName.indexOf('.json')) + '.state.json') || undefined;
+  console.log('State file restored: ' + (state !== undefined));
+  holder = new Holder(route, state);
+  delete state;
+  // holder.state.enable();  // TODO: Remove
+
   // Setup sensors and callbacks updating data
   require("Font7x11Numeric7Seg").add(Graphics);
   require("Font8x12").add(Graphics);
@@ -940,10 +979,9 @@ function main(){
 var last_drag = new Date();
 Bangle.on('touch', function(btn, xy) {
   var t = new Date();
-  if (t - last_drag < 200 || holder.inmenu)
-    return;
+  if (t - last_drag < 50 || holder.inmenu)
+  return;
 
-  console.log(xy['x'] + ' ' + xy['y'] + ' ' + mstate + ' ' + statedict['map']);
   if (mstate === statedict['map'] && xy['x'] < 35 && xy['y'] < 35){
     panOffset = [0, 0];
     draw();
@@ -984,4 +1022,4 @@ if (!STORAGE.readJSON("magnav.json",1))
 else
   main();
 
-enFakeData('trace.gpx.json')
+// enFakeData('trace.gpx.json')
