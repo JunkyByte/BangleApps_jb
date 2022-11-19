@@ -143,6 +143,7 @@ class StateHolder {
     this._elapsedTime = 0;
     this.up = 0;
     this.down = 0;
+    this.distanceT = 0;
 
     // Reload state
     if (state === undefined)
@@ -151,7 +152,6 @@ class StateHolder {
     for (const key in state) {
       this[key] = state[key];
     }
-
     this.active = false;
   }
 
@@ -164,17 +164,17 @@ class StateHolder {
     if (!this.active)
       return this._elapsedTime;
     startTime = Date.now();
-    this._elapsedTime = this._lastTime? startTime - this._lastTime: 0;
+    this._elapsedTime += this._lastTime? startTime - this._lastTime: 0;
     this._lastTime = startTime;
   }
 
   enable(){
     this.active = true;
     this._lastTime = 0;
-    STORAGE.writeJSON('follow_me.last_track.json', this.trackName)
   }
 
   disable(){
+    this.updateState();
     this.active = false;
     this._lastTime = 0;
   }
@@ -183,11 +183,16 @@ class StateHolder {
     if (!this.active || holder.lat === undefined || holder.lon === undefined)
       return;
 
-    if (this.trackName === undefined)
+    if (this.trackName === undefined){
       this.trackName = holder.route.routeName;
+      STORAGE.writeJSON('follow_me.last_track.json', this.trackName)
+    }
 
-    if (this.gpsTrack[-1] === undefined || distance(holder.lat, holder.lon, this.gpsTrack[-1][0], this.gpsTrack[-1][1]) > 10){
-      console.log('moved some distance! appending to state')
+    var l = this.gpsTrack.length;
+    if (this.gpsTrack[-1] === undefined || distance(holder.lat, holder.lon, this.gpsTrack[l-1][0], this.gpsTrack[l-1][1]) > 10){
+      console.log('Moved some distance! appending to state')
+      if (l > 0)
+        this.distanceT += distance(this.gpsTrack[l-1][0], this.gpsTrack[l-1][1], holder.lat, holder.lon);
       this.gpsTrack.push([holder.lat, holder.lon])
       this.courseTrack.push(holder.course);
       this.altTrack.push(holder.alt);
@@ -196,12 +201,35 @@ class StateHolder {
     this.updateElapsed();
   }
 
+  getJsonObject(){
+    data = {}
+    skipKeys = ['active', '_lastTime', 'elapsedTime'];
+    this.updateElapsed();
+
+    var skip;
+    for (const key in this){
+      skip = false;
+      for (const idx in skipKeys){
+        if (key === skipKeys[idx]){
+          skip = true;
+          break;
+        }
+      }
+
+      if (!skip){
+        data[key] = this[key];
+      }
+    }
+    return data
+  }
+
   saveState(){
     if (this.trackName === undefined)
       return;
-    console.log('Saving state');
     this.saved = Date.now();
-    STORAGE.writeJSON(this.trackName.substring(0, this.trackName.indexOf('.json')) + '.state.json', this);
+
+    STORAGE.writeJSON(this.trackName.substring(0, this.trackName.indexOf('.json')) + '.state.json', this.getJsonObject());
+    STORAGE.writeJSON('follow_me.last_track.json', this.trackName)
   }
 }
 
@@ -234,9 +262,7 @@ class Holder {
     this.course = undefined;
     this._heading = 0;
     this.speed = undefined;
-    this.start_length = 0;
     this.inmenu = false;
-    this.did_start = false;
     this.THR_FAR = 26;
     this.THR_CLOSE = 25;
   }
@@ -251,6 +277,7 @@ class Holder {
     this.dnnode = undefined;
     this.dsegm = undefined;
     this.was_far = false;
+    this.did_start = false;
     this.tot_length = 0;
     this.start_length = 0;
     this.min_alt = 0;
@@ -463,6 +490,10 @@ function showMenu(){
     "Pick File": () => {pickGPX(openGpx);},
     "Enable fake data": () => {pickGPX(enFakeData);},
     "Disable fake data": disableFakeData,
+    "Start": () => {holder.state.enable(); closeMenu();},
+    "Pause": () => {holder.state.disable(); closeMenu();},
+    "Reset": () => {holder.state = new StateHolder(); closeMenu();},
+    "Save": () => {holder.state.saveState(); closeMenu();},
     "Recalculate": function() {holder.find_endpoints(); closeMenu();},
     "Calib. mag" : function() {
       mag.docalibrate(false).then(() => {
@@ -543,7 +574,6 @@ function openGpx(filename){
   delete state;
   start();
   closeMenu();
-  holder.state.enable();
 }
 
 var statedict = {
@@ -581,6 +611,13 @@ function draw(){
 
     g.setFont("8x12", 2);
     g.drawString((Math.round(holder.tot_length / 100) / 10).toFixed(1) + 'km', 65, 80); // distance to arrival
+
+    var deltas = parseInt(holder.state.elapsedTime / 1000)
+    var deltaM = parseInt(deltas / 60)
+    var deltaH = parseInt(deltas / 3600)
+    g.setFont("8x12", 2);
+    g.drawString('ET ' + (deltaH < 10? '0' + deltaH : deltaH) + ':' + (deltaM < 10? '0' + deltaM : deltaM), 40, 120);
+
   } else if (mstate === statedict['infos']){
     g.setFont("8x12", 2);
     g.setColor(0, 0, 0);
@@ -598,12 +635,9 @@ function draw(){
     h += 26;
     g.drawLine(15, h, 163, h);
 
-    h += 8;  // Elapsed time from state start
-    var deltas = parseInt(holder.state.elapsedTime / 1000)
-    var deltaM = parseInt(deltas / 60)
-    var deltaH = parseInt(deltas / 3600)
-    g.setFont("8x12", 2);
-    g.drawString('ET ' + (deltaH < 10? '0' + deltaH : deltaH) + ':' + (deltaM < 10? '0' + deltaM : deltaM), 20, h - 3);
+    h += 5;  // Elapsed time from state start
+    var d = (Math.round(holder.state.distanceT / 100) / 10).toFixed(1)
+    g.drawString(d + '/' + (Math.round(holder.start_length / 100) / 10).toFixed(1) + ' km', 20, h);
 
     h += 25;
     g.drawImage(get_diagarrow_image(), 10, h - 3);
@@ -827,12 +861,14 @@ function queueDraw() {
 
 
 fileName = STORAGE.readJSON('follow_me.last_track.json') || 'og.gpx.json'
+console.log('Current filename: ' + fileName);
 var route_json = STORAGE.readJSON(fileName);
 var route = new Route(fileName, route_json);
 var state = STORAGE.readJSON(fileName.substring(0, fileName.indexOf('.json')) + '.state.json') || undefined;
+console.log('State file restored: ' + (state !== undefined));
 var holder = new Holder(route, state);
 delete state;
-holder.state.enable();
+holder.state.enable();  // TODO: Remove
 
 
 /*
@@ -858,7 +894,7 @@ function main(){
   require("Font7x11Numeric7Seg").add(Graphics);
   require("Font8x12").add(Graphics);
 
-  Bangle.on('kill', function() {
+  E.on('kill', function() {
     Bangle.setCompassPower(0, 'follow_me');
     Bangle.setGPSPower(0, 'follow_me');
     Bangle.setBarometerPower(0, 'follow_me');
