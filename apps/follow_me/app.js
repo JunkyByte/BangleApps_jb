@@ -37,7 +37,7 @@ function get_arrowg_image(){
 }
 
 function delta_angle(bearing, heading){
-  return ((((bearing - heading) % 360) + 540) % 360) - 180
+  return ((((bearing - heading) % 361) + 540) % 360) - 180;
 }
 
 function norm(x){
@@ -45,19 +45,19 @@ function norm(x){
   for (var i=0;i<x.length;i++){
     s+=x[i]*x[i];
   }
-  return Math.sqrt(s)
+  return Math.sqrt(s);
 }
 
 function dot(a, b){
   var s = 0;
   for (let i=0;i<a.length;i++)
     s += a[i] * b[i];
-  return s
+  return s;
 }
 
 function angular_dist(lat1, lon1, lat2, lon2){
-  var deltaphi = radians(lat2 - lat1)
-  var deltalambda = radians(lon2 - lon1)
+  var deltaphi = radians(lat2 - lat1);
+  var deltalambda = radians(lon2 - lon1);
   const a = Math.pow(Math.sin(deltaphi / 2), 2) +
             Math.cos(radians(lat1)) * Math.cos(radians(lat2)) *
             Math.pow(Math.sin(deltalambda /2), 2);
@@ -139,7 +139,8 @@ class StateHolder {
     this.gpsTrack = [];
     this.courseTrack = [];
     this.altTrack = [];
-    this.startTime = undefined;
+    this._lastTime = 0;
+    this._elapsedTime = 0;
     this.up = 0;
     this.down = 0;
 
@@ -154,9 +155,28 @@ class StateHolder {
     this.active = false;
   }
 
+  get elapsedTime(){
+    this.updateElapsed();
+    return this._elapsedTime;
+  }
+
+  updateElapsed(){
+    if (!this.active)
+      return this._elapsedTime;
+    startTime = Date.now();
+    this._elapsedTime = this._lastTime? startTime - this._lastTime: 0;
+    this._lastTime = startTime;
+  }
+
   enable(){
     this.active = true;
+    this._lastTime = 0;
     STORAGE.writeJSON('follow_me.last_track.json', this.trackName)
+  }
+
+  disable(){
+    this.active = false;
+    this._lastTime = 0;
   }
 
   updateState(){
@@ -167,24 +187,36 @@ class StateHolder {
       this.trackName = holder.route.routeName;
 
     if (this.gpsTrack[-1] === undefined || distance(holder.lat, holder.lon, this.gpsTrack[-1][0], this.gpsTrack[-1][1]) > 10){
+      console.log('moved some distance! appending to state')
       this.gpsTrack.push([holder.lat, holder.lon])
       this.courseTrack.push(holder.course);
       this.altTrack.push(holder.alt);
     }
+
+    this.updateElapsed();
   }
 
   saveState(){
+    if (this.trackName === undefined)
+      return;
+    console.log('Saving state');
     this.saved = Date.now();
-    STORAGE.writeJSON(this.trackName.substring(0, this.trackName.indexOf('.json')) + '.state.json'), this);
+    STORAGE.writeJSON(this.trackName.substring(0, this.trackName.indexOf('.json')) + '.state.json', this);
   }
 }
 
 
+var defaultAltitude = undefined;
 function onPressure(e) {
   if (!holder.state.active)
     return;
-  let diff = holder.alt - e.altitude;
+  if (defaultAltitude === undefined){
+    defaultAltitude = e.altitude;
+  }
+
+  let diff = e.altitude - defaultAltitude;
   if (Math.abs(diff) > 3){
+    console.log('got high pressure diff -> ' + diff);
     if (diff > 0){
       holder.state.up += diff;
     } else {
@@ -198,7 +230,6 @@ class Holder {
     this.reset(route, state);
     this.lat = undefined;
     this.log = undefined;
-    this.state = 0;
     this.alt = 0;
     this.course = undefined;
     this._heading = 0;
@@ -323,8 +354,8 @@ class Holder {
         return
       }
 
-      this.pnode = this.route.nodes[p_idx - 1]
-      this.nnode = this.route.nodes[p_idx]
+      this.pnode = this.route.nodes[p_idx - 1];
+      this.nnode = this.route.nodes[p_idx];
       this.was_far = false;
       return
     }
@@ -475,10 +506,12 @@ function enFakeData(filename){
       tt = 0;
     }
 
-    holder.lat = route_trace.nodes[nn].lat * (1 - tt/nstep) + route_trace.nodes[nn + 1].lat * tt/nstep;
-    holder.lon = route_trace.nodes[nn].lon * (1 - tt/nstep) + route_trace.nodes[nn + 1].lon * tt/nstep;
-    holder.ele = route_trace.nodes[nn].ele;
-    holder.speed = 0;
+    if (nn < route_trace.len) {
+      holder.lat = route_trace.nodes[nn].lat * (1 - tt/nstep) + route_trace.nodes[nn + 1].lat * tt/nstep;
+      holder.lon = route_trace.nodes[nn].lon * (1 - tt/nstep) + route_trace.nodes[nn + 1].lon * tt/nstep;
+      holder.ele = route_trace.nodes[nn].ele;
+      holder.speed = 0;
+    }
 
     console.log('Current fake pos: ' + nn + ' Lat ' + holder.lat + ' Lon ' + holder.lon);
   }, 1500);
@@ -510,6 +543,7 @@ function openGpx(filename){
   delete state;
   start();
   closeMenu();
+  holder.state.enable();
 }
 
 var statedict = {
@@ -519,7 +553,7 @@ var statedict = {
   'altim': 3
 };
 
-var mstate = statedict['altim'];
+var mstate = statedict['infos'];
 var drawInterval = undefined;
 var panOffset = [0, 0];
 var scale = 200;
@@ -560,6 +594,23 @@ function draw(){
     var w = g.stringWidth(parseInt(holder.tot_up));
     g.drawImage(get_diagarrow_image(), 46 + w + 8, h + 12, {rotate: Math.PI / 2});
     g.drawString(parseInt(holder.tot_down), 51 + w + 16, h);
+
+    h += 26;
+    g.drawLine(15, h, 163, h);
+
+    h += 8;  // Elapsed time from state start
+    var deltas = parseInt(holder.state.elapsedTime / 1000)
+    var deltaM = parseInt(deltas / 60)
+    var deltaH = parseInt(deltas / 3600)
+    g.setFont("8x12", 2);
+    g.drawString('ET ' + (deltaH < 10? '0' + deltaH : deltaH) + ':' + (deltaM < 10? '0' + deltaM : deltaM), 20, h - 3);
+
+    h += 25;
+    g.drawImage(get_diagarrow_image(), 10, h - 3);
+    g.drawString(parseInt(holder.state.up), 41, h);
+    var w = g.stringWidth(parseInt(holder.state.up));
+    g.drawImage(get_diagarrow_image(), 46 + w + 8, h + 12, {rotate: Math.PI / 2});
+    g.drawString(parseInt(holder.state.down), 51 + w + 16, h);
   } else if (mstate === statedict['altim']){
     updateInterval = 10000;
     if (holder.min_alt === 0 && holder.max_alt === 0)
@@ -713,8 +764,8 @@ function draw_frequent(){
     if (holder.target_pos !== undefined){
       b_target = bearing(holder.lat, holder.lon, holder.target_pos[0], holder.target_pos[1]);
       delta = delta_angle(b_target, holder.heading);
-      var w = undefined;
-      var rot = undefined;
+      var w;
+      var rot;
 
       var d = (Math.abs(delta) > 30);
       if (d && delta < 30){ // Right arrow
@@ -755,7 +806,7 @@ function draw_frequent(){
 */
 function onGPS(fix) {
   if (!fix.fix){
-    return
+    return;
   }
 
   holder.lat = fix.lat;
@@ -781,6 +832,8 @@ var route = new Route(fileName, route_json);
 var state = STORAGE.readJSON(fileName.substring(0, fileName.indexOf('.json')) + '.state.json') || undefined;
 var holder = new Holder(route, state);
 delete state;
+holder.state.enable();
+
 
 /*
  * The idea is to always have the segment you belong to and the distances from both end points and the segment itself.
@@ -798,20 +851,21 @@ delete state;
  * TODO: Fallback if you dont get close enough to end point it should switch to following one if you progress anyway? I guess just manually recalculate
 */
 
-
 var bg_image = get_bg_image();
 var bg_color = [0.917, 0.909, 0.803];
 function main(){
   // Setup sensors and callbacks updating data
   require("Font7x11Numeric7Seg").add(Graphics);
   require("Font8x12").add(Graphics);
-  Bangle.on('kill',function() {
+
+  Bangle.on('kill', function() {
     Bangle.setCompassPower(0, 'follow_me');
     Bangle.setGPSPower(0, 'follow_me');
     Bangle.setBarometerPower(0, 'follow_me');
     holder.state.saveState();
   });
 
+  Bangle.setPollInterval(800); // TODO: This may break the tilt compensation for magnetometer
   Bangle.on('GPS', onGPS);
   Bangle.on("pressure", onPressure);
 
@@ -823,6 +877,10 @@ function main(){
 
   setInterval(function() {  // Every N seconds update internal infos and decide if you want to draw
     update();
+  }, 10000);
+
+  setInterval(function() {  // Every N seconds update internal infos and decide if you want to draw
+    holder.state.updateState();
   }, 10000);
 
   setInterval(function() {
@@ -844,10 +902,18 @@ function main(){
 
 // Switch menus on tap
 var last_drag = new Date();
-Bangle.on('touch', function(data) {
+Bangle.on('touch', function(btn, xy) {
   var t = new Date();
   if (t - last_drag < 200 || holder.inmenu)
     return;
+
+  console.log(xy['x'] + ' ' + xy['y'] + ' ' + mstate + ' ' + statedict['map']);
+  if (mstate === statedict['map'] && xy['x'] < 35 && xy['y'] < 35){
+    panOffset = [0, 0];
+    draw();
+    return;
+  }
+
   mstate = (mstate + 1) % Object.keys(statedict).length;
   draw();
 });
@@ -861,7 +927,6 @@ Bangle.on('drag', function(e) {
     scale = Math.max(0, scale + 1 / 2 * e.dy);
   } else {
     panOffset[k] += 1 / 2 * (k === 0 ? e.dx: e.dy);
-    console.log(panOffset);
   }
 
   var t = new Date();
