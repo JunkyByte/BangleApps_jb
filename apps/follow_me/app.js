@@ -496,6 +496,7 @@ function showMenu(){
     },
     "Pick File": () => {pickGPX(openGpx);},
     "Enable fake data": () => {pickGPX(enFakeData);},
+    "Enable fake trace": () => {pickGPX((fn)=>{enFakeData(fn, true)}, true);},
     "Disable fake data": disableFakeData,
     "Start": () => {holder.state.enable(); closeMenu();},
     "Pause": () => {holder.state.disable(); closeMenu();},
@@ -514,10 +515,7 @@ function showMenu(){
   E.showMenu(mainmenu)
 }
 
-function trackBack(filename){
-  var state_json = STORAGE.readJSON(filename);
-  route_json = [];
-
+function stateToRouteJson(state_json){
   // Create fake route from state file, while reversing order for trackback
   var pos;
   var ele;
@@ -525,7 +523,15 @@ function trackBack(filename){
     pos = state_json['gpsTrack'][idx];
     route_json.push({'lat': pos[0], 'lon': pos[1], 'ele': state_json['altTrack'][idx]});
   }
+}
+
+function trackBack(filename){
+  var state_json = STORAGE.readJSON(filename);
+  route_json = [];
+
+  route_json = state_to_route(state_json)
   delete state_json;
+
   route = new Route('trackback', route_json);
   holder.reset(route, undefined);
   start();
@@ -546,8 +552,15 @@ function closeMenu(){
 }
 
 var fake_interval = undefined;
-function enFakeData(filename){
+function enFakeData(filename, state){
   var route_trace_json = STORAGE.readJSON(filename);  // TODO
+
+  var course = undefined;
+  if (state !== undefined){
+    course = state_json['courseTrack']; 
+    route_trace_json = state_to_route(route_trace_json);
+  }
+
   var route_trace = new Route(filename, route_trace_json);
   Bangle.setGPSPower(0, "follow_me");
 
@@ -568,6 +581,9 @@ function enFakeData(filename){
       holder.lon = route_trace.nodes[nn].lon * (1 - tt/nstep) + route_trace.nodes[nn + 1].lon * tt/nstep;
       holder.ele = route_trace.nodes[nn].ele;
       holder.speed = 0;
+      if (course !== undefined){
+        holder.course = course[nn] * (1 - tt/nstep) + course[nn + 1] * tt/nstep;
+      }
     }
 
     console.log('Current fake pos: ' + nn + ' Lat ' + holder.lat + ' Lon ' + holder.lon);
