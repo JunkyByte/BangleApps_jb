@@ -10,8 +10,11 @@ Tapping or button to switch to the next information display, swipe right for the
 
 Choose either a route or a waypoint as basis for the display.
 
-After this selection and availability of a GPS fix the compass will show a blue dot for your destination and a green one for possibly available waypoints on the way.
+After this selection and availability of a GPS fix the compass will show a checkered flag for your destination and a green dot for possibly available waypoints on the way.
 Waypoints are shown with name if available and distance to waypoint.
+
+As long as no GPS signal is available the compass shows the heading from the build in magnetometer. When a GPS fix becomes available, the compass display shows the GPS course. This can be differentiated by the display of bubble levels on top and sides of the compass.
+If they are on display, the source is the magnetometer and you should keep the bangle level. There is currently no tilt compensation for the compass display.
 
 ### Route
 
@@ -39,5 +42,9 @@ If the compass fallback starts to show unreliable values, you can reset the cali
 
 ## Widget
 
-The widget keeps the sensors alive and records some very basic statics when the app is not started.
-This uses a lot of power so ensure to stop the app if you are not actively using it.
+The widget keeps the sensors alive and records some very basic statistics when the app is not started. It shows as the app icon in the widget bar when the background task is active.
+This uses a lot of power so ensure to stop the app if you are not actively using it. 
+
+# Creator
+
+[halemmerich](https://github.com/halemmerich)

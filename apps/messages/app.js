@@ -68,8 +68,7 @@ function saveMessages() {
 
 function showMapMessage(msg) {
   active = "map";
-  var m;
-  var distance, street, target, eta;
+  var m, distance, street, target, eta;
   m=msg.title.match(/(.*) - (.*)/);
   if (m) {
     distance = m[1];
@@ -317,10 +316,14 @@ function showMessage(msgid) {
         {type:"txt", font:fontSmall, label:msg.src||/*LANG*/"Message", bgCol:g.theme.bg2, col: g.theme.fg2, fillx:1, pad:2, halign:1 },
         title?{type:"txt", font:titleFont, label:title, bgCol:g.theme.bg2, col: g.theme.fg2, fillx:1, pad:2 }:{},
       ]},
-      { type:"btn", src:require("messages").getMessageImage(msg), col:require("messages").getMessageImageCol(msg, g.theme.fg2), pad: 3, cb:()=>{
-        cancelReloadTimeout(); // don't auto-reload to clock now
-        showMessageSettings(msg);
-      }},
+      { type:"btn",
+        src:require("messageicons").getImage(msg),
+        col:require("messageicons").getColor(msg, {settings:settings, default:g.theme.fg2}),
+        pad: 3, cb:()=>{
+          cancelReloadTimeout(); // don't auto-reload to clock now
+          showMessageSettings(msg);
+        }
+      },
     ]},
     {type:"txt", font:bodyFont, label:body, fillx:1, filly:1, pad:2, cb:()=>{
       // allow tapping to show a larger version
@@ -379,18 +382,19 @@ function checkMessages(options) {
     draw : function(idx, r) {"ram"
       var msg = MESSAGES[idx];
       if (msg && msg.new) g.setBgColor(g.theme.bgH).setColor(g.theme.fgH);
-      else g.setColor(g.theme.fg);
+      else g.setBgColor(g.theme.bg).setColor(g.theme.fg);
       g.clearRect(r.x,r.y,r.x+r.w, r.y+r.h);
       if (!msg) return;
       var x = r.x+2, title = msg.title, body = msg.body;
-      var img = require("messages").getMessageImage(msg);
+      var img = require("messageicons").getImage(msg);
       if (msg.id=="music") {
         title = msg.artist || /*LANG*/"Music";
         body = msg.track;
       }
       if (img) {
-        var fg = g.getColor();
-        g.setColor(require("messages").getMessageImageCol(msg,fg)).drawImage(img, x+24, r.y+24, {rotate:0}) // force centering
+        var fg = g.getColor(),
+            col = require("messageicons").getColor(msg, {settings:settings, default:fg});
+        g.setColor(col).drawImage(img, x+24, r.y+24, {rotate:0}) // force centering
          .setColor(fg); // only color the icon
         x += 50;
       }
