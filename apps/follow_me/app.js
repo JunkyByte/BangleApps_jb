@@ -96,11 +96,10 @@ function dist_segment(pos_lat, pos_lon, a_lat, a_lon, b_lat, b_lon){
 }
 
 class Node {
-  constructor(lat, lon, ele, time){
+  constructor(lat, lon, ele){
     this.lat = parseFloat(lat);
     this.lon = parseFloat(lon);
     this.ele = parseFloat(ele);
-    this.time = parseFloat(time);
   }
 }
 
@@ -111,7 +110,7 @@ class Route {
     this.nodes = [];
     for (var idx in route_json) {
       var entry = route_json[idx];
-      this.nodes.push(new Node(entry.lat, entry.lon, entry.ele, entry.time));
+      this.nodes.push(new Node(entry.lat, entry.lon, entry.ele));
     }
   }
 
@@ -223,7 +222,7 @@ class StateHolder {
   }
 
   saveState(){
-    if (this.trackName === undefined || this.trackName === 'trackback')
+    if (this.trackName === undefined || this.trackName === 'trackback' || this.gpsTrack.length === 0)
       return;
     this.saved = Date.now();
 
@@ -249,6 +248,7 @@ function onPressure(e) {
     } else {
       holder.state.down -= diff;
     }
+    defaultAltitude += diff;
   }
 }
 
@@ -405,9 +405,6 @@ class Holder {
   }
 
   update_total_len() {
-    if (this.route.len == 0)
-      return;
-
     this.tot_length = 0;
     this.tot_up = 0;
     this.tot_down = 0;
@@ -421,15 +418,9 @@ class Holder {
       else if (delta_alt < 0)
         this.tot_down += -delta_alt;
     }
-
-    console.log(this.tot_down);
-    console.log(this.tot_up);
   }
 
   find_endpoints() {  // Finds current endpoints assuming no previous information
-    if (this.route.len == 0)
-      return;
-
     var distances = [];
     for (let idx = 0; idx < this.route.len; idx++){
       var node = this.route.nodes[idx];
@@ -466,24 +457,29 @@ class Holder {
 }
 
 function start(){
+  if (holder.heading === undefined || holder.lat === undefined || holder.route.len === 0)
+    return false;
+
   // Start by finding end points
   holder.find_endpoints()
   holder.update_total_len()
+  return true;
 }
 
 function update(){
   if (holder.heading === undefined || holder.lat === undefined){  // TODO: Add indicator that GPS not ready
     // E.showMessage('Sensors not ready')
     console.log('Sensors not ready');
-    return
+    return;
   }
 
   if (!holder.did_start){
-    start();
+    holder.did_start = start();
+    if (!holder.did_start)
+      return;
     draw();
-    holder.did_start = true;
   }
-  
+
   holder.update_nodes();
   holder.update_distances();
   holder.find_target();
@@ -519,17 +515,17 @@ function stateToRouteJson(state_json){
   // Create fake route from state file, while reversing order for trackback
   var pos;
   var ele;
+  var route_json = [];
   for (var idx=state_json['gpsTrack'].length - 1; idx >= 0; idx--){
     pos = state_json['gpsTrack'][idx];
     route_json.push({'lat': pos[0], 'lon': pos[1], 'ele': state_json['altTrack'][idx]});
   }
+  return route_json;
 }
 
 function trackBack(filename){
   var state_json = STORAGE.readJSON(filename);
-  route_json = [];
-
-  route_json = state_to_route(state_json)
+  var route_json = stateToRouteJson(state_json)
   delete state_json;
 
   route = new Route('trackback', route_json);
@@ -542,7 +538,7 @@ function disableFakeData(){
   if (fake_interval !== undefined)
     clearInterval(fake_interval);
   closeMenu();
-  Bangle.setGPSPower(1, 'follow_me')
+  Bangle.setGPSPower(1, 'follow_me');
 }
 
 function closeMenu(){
@@ -553,12 +549,12 @@ function closeMenu(){
 
 var fake_interval = undefined;
 function enFakeData(filename, state){
-  var route_trace_json = STORAGE.readJSON(filename);  // TODO
+  var route_trace_json = STORAGE.readJSON(filename);
 
-  var course = undefined;
+  var course;
   if (state !== undefined){
-    course = state_json['courseTrack']; 
-    route_trace_json = state_to_route(route_trace_json);
+    course = route_trace_json['courseTrack']; 
+    route_trace_json = stateToRouteJson(route_trace_json);
   }
 
   var route_trace = new Route(filename, route_trace_json);
@@ -567,7 +563,7 @@ function enFakeData(filename, state){
   // Setup fake data
   var nn = 0;
   var tt = -1;
-  var nstep = 10;
+  var nstep = 5;
 
   fake_interval = setInterval(function() {  // Every N seconds update internal infos and decide if you want to draw
     tt += 1;
@@ -617,11 +613,16 @@ function pickGPX(callback, isState) {
   return E.showMenu(menu);
 }
 
-function openGpx(filename){
-  route_json = STORAGE.readJSON(filename);
+function openGpx(filename, state){
+  var route_json = STORAGE.readJSON(filename);
+  if (state !== undefined){
+    route_json = stateToRouteJson(route_json);
+  }
+
   route = new Route(filename, route_json);
   state = STORAGE.readJSON(filename.substring(0, filename.indexOf('.json')) + '.state.json') || undefined;
   holder.reset(route, state);
+
   delete state;
   start();
   closeMenu();
@@ -634,7 +635,7 @@ var statedict = {
   'altim': 3
 };
 
-var mstate = statedict['infos'];
+var mstate = statedict['map'];
 var drawInterval = undefined;
 var panOffset = [0, 0];
 var scale = 200;
@@ -698,7 +699,7 @@ function draw(){
     g.drawString(parseInt(holder.state.down), 51 + w + 16, h);
   } else if (mstate === statedict['altim']){
     updateInterval = 10000;
-    if (holder.min_alt === 0 && holder.max_alt === 0){
+    if (holder.min_alt === 0 && holder.max_alt === 0 || holder.min_alt === undefined && holder.max_alt === undefined){
       g.setColor(0, 0, 0);
       g.setFont("8x12", 2);
       g.drawString('no altitude data', 27, 68);
@@ -755,22 +756,22 @@ function draw(){
     var pnodeidx = holder.route.get_node_idx(holder.pnode);
     // TODO: What should be drawn? Here close to position, but if you pan it breaks..
     for (let idx = Math.max(0, pnodeidx - 20); idx < Math.min(pnodeidx + 20, holder.route.len - 1); idx++){
-      var pnode = holder.route.nodes[idx];
-      var nnode = holder.route.nodes[idx + 1];
+      let pnode = holder.route.nodes[idx];
+      let nnode = holder.route.nodes[idx + 1];
 
       // Length in km of 1° of latitude = always 111.32 km
       // Length in km of 1° of longitude = 40075 km * cos( latitude ) / 360
-      var x0 = (pnode.lat - holder.lat) * 111.32
-      var y0 = (pnode.lon - holder.lon) * 40075 * Math.cos(holder.lat) / 360
-      var x1 = (nnode.lat - holder.lat) * 111.32
-      var y1 = (nnode.lon - holder.lon) * 40075 * Math.cos(holder.lat) / 360
+      let x0 = (pnode.lat - holder.lat) * 111.32;
+      let y0 = (pnode.lon - holder.lon) * 40075 * Math.cos(holder.lat) / 360;
+      let x1 = (nnode.lat - holder.lat) * 111.32;
+      let y1 = (nnode.lon - holder.lon) * 40075 * Math.cos(holder.lat) / 360;
       // console.log(x0 + ' ' + y0 + ' ' + x1 + ' ' + y1);
 
       // Our position is (0, 0) + draw_offset
-      var a = parseInt(x0 * scale) + drawOffset[0] + panOffset[0]
-      var b = parseInt(y0 * scale) + drawOffset[1] + panOffset[1]
-      var c = parseInt(x1 * scale) + drawOffset[0] + panOffset[0]
-      var d = parseInt(y1 * scale) + drawOffset[1] + panOffset[1]
+      let a = parseInt(x0 * scale) + drawOffset[0] + panOffset[0];
+      let b = parseInt(y0 * scale) + drawOffset[1] + panOffset[1];
+      let c = parseInt(x1 * scale) + drawOffset[0] + panOffset[0];
+      let d = parseInt(y1 * scale) + drawOffset[1] + panOffset[1];
       // console.log(a + ' ' + b + ' ' + c + ' ' + d);
 
       if (a < boundX[0] || a > boundX[1] || c < boundX[0] || c > boundX[1])
@@ -783,14 +784,19 @@ function draw(){
 
       if (idx === 0){
         g.setColor(0, 1, 0);
-        g.fillCircle(a, b, 3)
+        g.fillCircle(a, b, 3);
       } else if (idx === holder.route.len - 2){
         g.setColor(0, 0, 1);
-        g.fillCircle(c, d, 3)
+        g.fillCircle(c, d, 3);
       }
     }
-    var opt = {rotate: -radians(holder.heading), scale: 0.4};
-    g.drawImage(get_compass_image(), drawOffset[0] + panOffset[0] + 1, drawOffset[1] + panOffset[1] - 1, opt)
+
+    a = drawOffset[0] + panOffset[0] + 1;
+    b = drawOffset[1] + panOffset[1] - 1;
+    if (a < boundX[0] || a > boundX[1] || b < boundY[0] || b > boundY[1])
+      return;
+    let opt = {rotate: radians(holder.course), scale: Math.max(0.2, Math.min(0.7, 0.45 * scale / 200))};
+    g.drawImage(get_compass_image(), a, b, opt);
   }
 
   // Trick to have a custom time interval while using return inside the function
@@ -935,16 +941,6 @@ var bg_image = get_bg_image();
 var bg_color = [0.917, 0.909, 0.803];
 var holder;
 function main(){
-  fileName = STORAGE.readJSON('follow_me.last_track.json') || 'og.gpx.json'
-  console.log('Current filename: ' + fileName);
-  var route_json = STORAGE.readJSON(fileName);
-  var route = new Route(fileName, route_json);
-  var state = STORAGE.readJSON(fileName.substring(0, fileName.indexOf('.json')) + '.state.json') || undefined;
-  console.log('State file restored: ' + (state !== undefined));
-  holder = new Holder(route, state);
-  delete state;
-  // holder.state.enable();  // TODO: Remove
-
   // Setup sensors and callbacks updating data
   require("Font7x11Numeric7Seg").add(Graphics);
   require("Font8x12").add(Graphics);
@@ -963,6 +959,13 @@ function main(){
   Bangle.setGPSPower(1, "follow_me");
   Bangle.setCompassPower(1, "follow_me");
   Bangle.setBarometerPower(1, "follow_me");
+
+  froute = STORAGE.readJSON('fake.gpx.json');
+  holder = new Holder(froute, undefined);
+  start();
+  fileName = STORAGE.readJSON('follow_me.last_track.json') || 'fake.gpx.state.json'
+  console.log('Current filename: ' + fileName);
+  openGpx(fileName, fileName.includes('.state'));
   update();
   draw();
 
@@ -996,7 +999,7 @@ var last_drag = new Date();
 Bangle.on('touch', function(btn, xy) {
   var t = new Date();
   if (t - last_drag < 50 || holder.inmenu)
-  return;
+    return;
 
   if (mstate === statedict['map'] && xy['x'] < 35 && xy['y'] < 35){
     panOffset = [0, 0];
@@ -1014,13 +1017,13 @@ Bangle.on('drag', function(e) {
 
   var k = Math.abs(e.dx) < Math.abs(e.dy) ? 1: 0;
   if (e.x > 160 && k === 1){
-    scale = Math.max(0, scale + 1 / 2 * e.dy);
+    scale = Math.max(75, scale + e.dy);
   } else {
     panOffset[k] += 1 / 2 * (k === 0 ? e.dx: e.dy);
   }
 
   var t = new Date();
-  if (t - last_drag > 150){
+  if (t - last_drag > 100){
     last_drag = new Date();
     draw();
   }
@@ -1038,4 +1041,4 @@ if (!STORAGE.readJSON("magnav.json",1))
 else
   main();
 
-// enFakeData('trace.gpx.json')
+enFakeData('fake.gpx.state.json', true)
