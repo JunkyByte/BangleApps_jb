@@ -791,6 +791,16 @@ function draw(){
       }
     }
 
+    // Draw target
+    if (holder.target_pos !== undefined){
+      x0 = (holder.target_pos[0] - holder.lat) * 111.32;
+      y0 = (holder.target_pos[1] - holder.lon) * 40075 * Math.cos(holder.lat) / 360;
+      a = parseInt(x0 * scale) + drawOffset[0] + panOffset[0];
+      b = parseInt(y0 * scale) + drawOffset[1] + panOffset[1];
+      g.setColor(1, 0, 0);
+      g.fillCircle(a, b, 2);
+    }
+
     a = drawOffset[0] + panOffset[0] + 1;
     b = drawOffset[1] + panOffset[1] - 1;
     if (a < boundX[0] || a > boundX[1] || b < boundY[0] || b > boundY[1])
