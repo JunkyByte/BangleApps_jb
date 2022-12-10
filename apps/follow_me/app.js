@@ -221,13 +221,18 @@ class StateHolder {
     return data
   }
 
-  saveState(){
-    if (this.trackName === undefined || this.trackName === 'trackback' || this.gpsTrack.length === 0)
+  saveState(auto){
+    if (this.trackName === 'trackback' || this.gpsTrack.length === 0)
       return;
-    this.saved = Date.now();
 
-    STORAGE.writeJSON(this.trackName.substring(0, this.trackName.indexOf('.json')) + '.state.json', this.getJsonObject());
-    STORAGE.writeJSON('follow_me.last_track.json', this.trackName)
+    this.saved = Date.now();
+    if (auto === true)
+      STORAGE.writeJSON('follow_me_tmp.state.json', this.getJsonObject());
+    else {
+      var nfiles = STORAGE.list(/\.gpx\.state\.json$/).length
+      STORAGE.writeJSON('follow_me_' + nfiles + '.state.json', this.getJsonObject());
+      STORAGE.writeJSON('follow_me.last_track.json', this.trackName)
+    }
   }
 }
 
@@ -241,7 +246,7 @@ function onPressure(e) {
   }
 
   let diff = e.altitude - defaultAltitude;
-  if (Math.abs(diff) > 3){
+  if (Math.abs(diff) > 5){
     console.log('got high pressure diff -> ' + diff);
     if (diff > 0){
       holder.state.up += diff;
@@ -620,7 +625,7 @@ function openGpx(filename, state){
   }
 
   route = new Route(filename, route_json);
-  state = STORAGE.readJSON(filename.substring(0, filename.indexOf('.json')) + '.state.json') || undefined;
+  state = STORAGE.readJSON('follow_me_tmp.state.json') || undefined;
   holder.reset(route, state);
 
   delete state;
@@ -959,7 +964,7 @@ function main(){
     Bangle.setCompassPower(0, 'follow_me');
     Bangle.setGPSPower(0, 'follow_me');
     Bangle.setBarometerPower(0, 'follow_me');
-    holder.state.saveState();
+    holder.state.saveState(true);
   });
 
   Bangle.setPollInterval(800); // TODO: This may break the tilt compensation for magnetometer
