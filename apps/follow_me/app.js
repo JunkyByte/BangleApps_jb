@@ -267,8 +267,7 @@ class Holder {
     this._heading = 0;
     this.speed = undefined;
     this.inmenu = false;
-    this.THR_FAR = 26;
-    this.THR_CLOSE = 25;
+    this.THR_CLOSE = 40;  // TODO: What's the correct distance?
   }
 
   reset(route, state) {
@@ -280,7 +279,6 @@ class Holder {
     this.dpnode = undefined;
     this.dnnode = undefined;
     this.dsegm = undefined;
-    this.was_far = false;
     this.did_start = false;
     this.tot_length = 0;
     this.start_length = 0;
@@ -347,15 +345,7 @@ class Holder {
 
   update_nodes() {
     // Update the nodes based on distance
-    if (!this.was_far && this.dpnode > this.THR_FAR){
-      console.log('[FAR PNODE] We are far from pnode, was_far=true');
-      this.was_far = true;
-    }
-    
-    if (!this.was_far)  // If we are too close to pnode just ignore
-      return;
 
-    // You close to nnode?
     if (this.dnnode < this.THR_CLOSE){
       console.log('[CLOSE NNODE] We are close to nnode, updating to next one');
       this.update_total_len();  // TODO
@@ -369,25 +359,6 @@ class Holder {
 
       this.pnode = this.route.nodes[n_idx]
       this.nnode = this.route.nodes[n_idx + 1]
-      this.was_far = false;
-      return
-    }
-
-    // You close to pnode? (assuming we were far before)
-    if (this.dpnode < this.THR_CLOSE){
-      console.log('[CLOSE PNODE] We are close to previous node, updating backwards');
-      // Update nodes n <- p and p <- p - 1
-      this.update_total_len();  // TODO
-      var p_idx = this.route.get_node_idx(this.pnode);
-
-      if (p_idx == 0){
-        console.log('[FIRST NODE] pnode is already first node');
-        return
-      }
-
-      this.pnode = this.route.nodes[p_idx - 1];
-      this.nnode = this.route.nodes[p_idx];
-      this.was_far = false;
       return
     }
   }
