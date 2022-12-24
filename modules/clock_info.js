@@ -2,9 +2,9 @@
 that can be scrolled through on the clock face.
 
 `load()` returns an array of menu objects, where each object contains a list of menu items:
-
 * `name` : text to display and identify menu object (e.g. weather)
 * `img` : a 24x24px image
+* `dynamic` : if `true`, items are not constant but are sorted (e.g. calendar events sorted by date)
 * `items` : menu items such as temperature, humidity, wind etc.
 
 Note that each item is an object with:
@@ -15,6 +15,7 @@ Note that each item is an object with:
 
 {
   'text'  // the text to display for this item
+  'short' : (optional) a shorter text to display for this item (at most 6 characters)
   'img'   // optional: a 24x24px image to display for this item
   'v'     // (if hasRange==true) a numerical value
   'min','max' // (if hasRange==true) a minimum and maximum numerical value (if this were to be displayed as a guage)
@@ -48,15 +49,27 @@ example.clkinfo.js :
 
 */
 
+let storage = require("Storage");
+let stepGoal = undefined;
+// Load step goal from health app and pedometer widget
+let d = storage.readJSON("health.json", true) || {};
+stepGoal = d != undefined && d.settings != undefined ? d.settings.stepGoal : undefined;
+if (stepGoal == undefined) {
+  d = storage.readJSON("wpedom.json", true) || {};
+  stepGoal = d != undefined && d.settings != undefined ? d.settings.goal : 10000;
+}
 
 exports.load = function() {
   // info used for drawing...
-  var hrm = "--";
+  var hrm = 0;
   var alt = "--";
   // callbacks (needed for easy removal of listeners)
   function batteryUpdateHandler() { bangleItems[0].emit("redraw"); }
   function stepUpdateHandler() { bangleItems[1].emit("redraw"); }
-  function hrmUpdateHandler() { bangleItems[2].emit("redraw"); }
+  function hrmUpdateHandler(e) {
+    if (e && e.confidence>60) hrm = Math.round(e.bpm);
+    bangleItems[2].emit("redraw");
+  }
   function altUpdateHandler() {
     Bangle.getPressure().then(data=>{
       if (!data) return;
@@ -67,7 +80,7 @@ exports.load = function() {
   // actual menu
   var menu = [{
     name: "Bangle",
-    img: atob("GBiBAf8B//4B//4B//4B//4A//x4//n+f/P/P+fPn+fPn+fP3+/Px+/Px+fn3+fzn+f/n/P/P/n+f/x4//4A//4B//4B//4B//8B/w=="),
+    img: atob("GBiBAAD+AAH+AAH+AAH+AAH/AAOHAAYBgAwAwBgwYBgwYBgwIBAwOBAwOBgYIBgMYBgAYAwAwAYBgAOHAAH/AAH+AAH+AAH+AAD+AA=="),
     items: [
     { name : "Battery",
       hasRange : true,
@@ -81,7 +94,7 @@ exports.load = function() {
     { name : "Steps",
       hasRange : true,
       get : () => { let v = Bangle.getHealthStatus("day").steps; return {
-          text : v, v : v, min : 0, max : 10000, // TODO: do we have a target step amount anywhere?
+          text : v, v : v, min : 0, max : stepGoal,
         img : atob("GBiBAAcAAA+AAA/AAA/AAB/AAB/gAA/g4A/h8A/j8A/D8A/D+AfH+AAH8AHn8APj8APj8AHj4AHg4AADAAAHwAAHwAAHgAAHgAADAA==")
       }},
       show : function() { Bangle.on("step", stepUpdateHandler); stepUpdateHandler(); },
@@ -89,12 +102,12 @@ exports.load = function() {
     },
     { name : "HRM",
       hasRange : true,
-      get : () => { let v =  Math.round(Bangle.getHealthStatus("last").bpm); return {
-        text : v + " bpm", v : v, min : 40, max : 200,
+      get : () => { return {
+        text : (hrm||"--") + " bpm", v : hrm, min : 40, max : 200,
         img : atob("GBiBAAAAAAAAAAAAAAAAAAAAAADAAADAAAHAAAHjAAHjgAPngH9n/n82/gA+AAA8AAA8AAAcAAAYAAAYAAAAAAAAAAAAAAAAAAAAAA==")
       }},
-      show : function() { Bangle.setHRMPower(1,"clkinfo"); Bangle.on("HRM", hrmUpdateHandler); hrm = Math.round(Bangle.getHealthStatus("last").bpm); hrmUpdateHandler(); },
-      hide : function() { Bangle.setHRMPower(0,"clkinfo"); Bangle.removeListener("HRM", hrmUpdateHandler); hrm = "--"; },
+      show : function() { Bangle.setHRMPower(1,"clkinfo"); Bangle.on("HRM", hrmUpdateHandler); hrm = Math.round(Bangle.getHealthStatus().bpm||Bangle.getHealthStatus("last").bpm); hrmUpdateHandler(); },
+      hide : function() { Bangle.setHRMPower(0,"clkinfo"); Bangle.removeListener("HRM", hrmUpdateHandler); hrm = 0; },
     }
   ],
   }];
@@ -226,10 +239,15 @@ exports.addInteractive = function(menu, options) {
     } else if (lr) {
       if (menu.length==1) return; // 1 item - can't move
       oldMenuItem = menu[options.menuA].items[options.menuB];
-      options.menuA += lr;
-      if (options.menuA<0) options.menuA = menu.length-1;
-      if (options.menuA>=menu.length) options.menuA = 0;
-      options.menuB = 0;
+      do {
+        options.menuA += lr;
+        if (options.menuA<0) options.menuA = menu.length-1;
+        if (options.menuA>=menu.length) options.menuA = 0;
+        options.menuB = 0;
+        //get the next one if the menu is empty
+        //can happen for dynamic ones (alarms, events)
+        //in the worst case we come back to 0
+      } while(menu[options.menuA].items.length==0);
     }
     if (oldMenuItem) {
       menuHideItem(oldMenuItem);
