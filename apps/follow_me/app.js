@@ -37,7 +37,7 @@ function get_arrowg_image(){
 }
 
 function delta_angle(bearing, heading){
-  return ((((bearing - heading) % 361) + 540) % 360) - 180;
+  return ((((bearing - heading) % 361) + 540) % 360) - 180;  // 361?
 }
 
 function norm(x){
@@ -136,7 +136,6 @@ class StateHolder {
     this.trackName = undefined;
     this.saved = undefined;
     this.gpsTrack = [];
-    this.courseTrack = [];
     this.altTrack = [];
     this._lastTime = 0;
     this._elapsedTime = 0;
@@ -193,7 +192,6 @@ class StateHolder {
       if (l > 0)
         this.distanceT += distance(this.gpsTrack[l-1][0], this.gpsTrack[l-1][1], holder.lat, holder.lon);
       this.gpsTrack.push([holder.lat, holder.lon])
-      this.courseTrack.push(holder.course);
       this.altTrack.push(holder.alt);
     }
     this.updateElapsed();
@@ -535,7 +533,6 @@ function enFakeData(filename, state){
 
   var course;
   if (state !== undefined){
-    course = route_trace_json['courseTrack']; 
     route_trace_json = stateToRouteJson(route_trace_json);
   }
 
@@ -558,10 +555,18 @@ function enFakeData(filename, state){
       holder.lat = route_trace.nodes[nn].lat * (1 - tt/nstep) + route_trace.nodes[nn + 1].lat * tt/nstep;
       holder.lon = route_trace.nodes[nn].lon * (1 - tt/nstep) + route_trace.nodes[nn + 1].lon * tt/nstep;
       holder.ele = route_trace.nodes[nn].ele;
-      holder.speed = 0;
-      if (course !== undefined){
-        holder.course = course[nn] * (1 - tt/nstep) + course[nn + 1] * tt/nstep;
-      }
+      holder.speed = 42;
+
+      onGPS({"lat": holder.lat,      // Latitude in degrees
+             "lon": holder.lon,      // Longitude in degrees
+             "alt": holder.ele,      // altitude in M
+             "speed": holder.speed,    // Speed in kph
+             "course": undefined,   // Course in degrees
+             "time": undefined,       // Current Time (or undefined if not known)
+             "satellites": undefined,    // Number of satellites
+             "fix": 1,           // NMEA Fix state - 0 is no fix
+             "hdop": undefined,     // Horizontal Dilution of Precision
+           });
     }
 
     console.log('Current fake pos: ' + nn + ' Lat ' + holder.lat + ' Lon ' + holder.lon);
@@ -787,7 +792,7 @@ function draw(){
     b = drawOffset[1] + panOffset[1] - 1;
     if (a < boundX[0] || a > boundX[1] || b < boundY[0] || b > boundY[1])
       return;
-    let opt = {rotate: radians(holder.course), scale: Math.max(0.2, Math.min(0.7, 0.45 * scale / 200))};
+    let opt = {rotate: radians(holder.course) + Math.PI / 2, scale: Math.max(0.2, Math.min(0.7, 0.45 * scale / 200))};
     g.drawImage(get_compass_image(), a, b, opt);
   }
 
@@ -891,6 +896,9 @@ function draw_frequent(){
   "hdop": number,     // Horizontal Dilution of Precision
 }
 */
+
+var last_lat;
+var last_lon;
 function onGPS(fix) {
   if (!fix.fix){
     return;
@@ -900,7 +908,12 @@ function onGPS(fix) {
   holder.lon = fix.lon;
   holder.alt = fix.alt;  // TODO
   holder.speed = fix.speed;
-  holder.course = fix.course;
+
+  if (holder.speed > 1 && last_lat !== undefined){
+    holder.course = bearing(last_lat, last_lon, holder.lat, holder.lon);
+  }
+  last_lat = holder.lat;
+  last_lon = holder.lon;
 }
 
 var drawTimeout;
@@ -1033,4 +1046,4 @@ if (!STORAGE.readJSON("magnav.json",1))
 else
   main();
 
-enFakeData('fake.gpx.state.json', true)
+// enFakeData('fake.gpx.state.json', true)
