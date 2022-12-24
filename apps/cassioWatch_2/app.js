@@ -20,6 +20,8 @@ function getWeatherImage(weather){
       return require("heatshrink").decompress(atob("kEg4MA///tkyBAIMDAYsQgFAgEIgHABAP8wEAgeGAwMCgfwgEGg0CgEEhgDB8gYBA4MYgOAgvwgP4g4oBxkGBwMGhgDBgYWCgIDHB4cEGwQbDgZcB/kAv//8EAsODBoPDCIQAHmFBLgNgCYXBCYWCFoI"));
   } else if (weather == 'clouds'){
       return require("heatshrink").decompress(atob("kEg4MA///tkyCBEQAYUwAZQAG4H+g0A8P/h0AseDxkABIPAAYXwgEMgf8AYMHx4DBh0DAYMMgOAAYX4g0YgH8g84gEOuf4EQPhEwMDCoIDMg4DCHwccOgQhBn//8BfHA"));
+  } else if (weather === 'snow'){
+      return require("heatshrink").decompress(atob("j0e4MA///tkygEDBgUMAYUwAwXMAYM/+EAgl/xEAnF4uEc8HB51/wcH/F+hkfwF4mF4gf44/wnl7vHw8H/4PAgH8FAMDFAM4FgNw+Pt8fA/0x/kBFgPgj4sB8P+FgPnnEwueA8Ph4EBj/iEoP/FYMDmZdCAwJoHA"));
   }
 
   throw '?'

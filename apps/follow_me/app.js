@@ -297,6 +297,12 @@ class Holder {
   update_alt() {
     // Altitude overview
     // First find max/min
+    if (this.route.len > 0 && this.route.nodes[0].ele === undefined){
+      this.max_alt = undefined;
+      this.min_alt = undefined;
+      return;
+    }
+
     this.max_alt = Number.NEGATIVE_INFINITY;
     this.min_alt = Number.POSITIVE_INFINITY;
     for (let idx = 0; idx < this.route.len; idx++){
